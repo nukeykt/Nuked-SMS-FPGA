@@ -124,6 +124,23 @@ module ymn_rs_trig
 	
 endmodule
 
+module ymn_rs_trig2
+	(
+	input MCLK,
+	input set,
+	input rst,
+	output reg q = 1'h0,
+	output reg nq = 1'h1
+	);
+	
+	always @(posedge MCLK)
+	begin
+		q <= set ? 1'h1 : (rst ? 1'h0 : q);
+		nq <= rst ? 1'h1 : (set ? 1'h0 : ~q); 
+	end
+	
+endmodule
+
 module ymn_slatch_r #(parameter DATA_WIDTH = 1)
 	(
 	input MCLK,
