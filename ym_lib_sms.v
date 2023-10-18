@@ -1,10 +1,10 @@
-module ym_sr_bit #(parameter SR_LENGTH = 1)
+module ymn_sr_bit #(parameter SR_LENGTH = 1)
 	(
 	input MCLK,
 	input c1,
 	input c2,
-	input bit_in,
-	output sr_out
+	input inp,
+	output val
 	);
 	
 	reg [SR_LENGTH-1:0] v1 = 0;
@@ -13,28 +13,28 @@ module ym_sr_bit #(parameter SR_LENGTH = 1)
 	wire [SR_LENGTH-1:0] v2_assign = c2 ? v1 : v2;
 	
 	//assign sr_out = v2_assign[SR_LENGTH-1];
-	assign sr_out = v2[SR_LENGTH-1];
+	assign val = v2[SR_LENGTH-1];
 	
 	always @(posedge MCLK)
 	begin
 		if (c1)
 		begin
 			if (SR_LENGTH == 1)
-				v1 <= bit_in;
+				v1 <= inp;
 			else
-				v1 <= { v2[SR_LENGTH-2:0], bit_in };
+				v1 <= { v2[SR_LENGTH-2:0], inp };
 		end
 		v2 <= v2_assign;
 	end
 endmodule
 
-module ym_sr_bit_array #(parameter SR_LENGTH = 1, DATA_WIDTH = 1)
+module ymn_sr_bit_array #(parameter SR_LENGTH = 1, DATA_WIDTH = 1)
 	(
 	input MCLK,
 	input c1,
 	input c2,
-	input [DATA_WIDTH-1:0] data_in,
-	output [DATA_WIDTH-1:0] data_out
+	input [DATA_WIDTH-1:0] inp,
+	output [DATA_WIDTH-1:0] val
 	);
 	
 	wire out[0:DATA_WIDTH-1];
@@ -43,21 +43,21 @@ module ym_sr_bit_array #(parameter SR_LENGTH = 1, DATA_WIDTH = 1)
 		genvar i;
 		for (i = 0; i < DATA_WIDTH; i = i + 1)
 		begin : l1
-			ym_sr_bit #(.SR_LENGTH(SR_LENGTH)) sr (
+			ymn_sr_bit #(.SR_LENGTH(SR_LENGTH)) sr (
 			.MCLK(MCLK),
 			.c1(c1),
 			.c2(c2),
-			.bit_in(data_in[i]),
-			.sr_out(out[i])
+			.inp(inp[i]),
+			.val(out[i])
 			);
 			
-			assign data_out[i] = out[i];
+			assign val[i] = out[i];
 		end
 	endgenerate
 
 endmodule
 
-module ym_dlatch #(parameter DATA_WIDTH = 1)
+module ymn_dlatch #(parameter DATA_WIDTH = 1)
 	(
 	input MCLK,
 	input en,
@@ -82,7 +82,7 @@ module ym_dlatch #(parameter DATA_WIDTH = 1)
 	
 endmodule
 
-module ym_slatch #(parameter DATA_WIDTH = 1)
+module ymn_slatch #(parameter DATA_WIDTH = 1)
 	(
 	input MCLK,
 	input en,
@@ -107,7 +107,7 @@ module ym_slatch #(parameter DATA_WIDTH = 1)
 	
 endmodule
 
-module ym_rs_trig
+module ymn_rs_trig
 	(
 	input MCLK,
 	input set,
@@ -124,7 +124,7 @@ module ym_rs_trig
 	
 endmodule
 
-module ym_slatch_r #(parameter DATA_WIDTH = 1)
+module ymn_slatch_r #(parameter DATA_WIDTH = 1)
 	(
 	input MCLK,
 	input en,
@@ -150,7 +150,7 @@ module ym_slatch_r #(parameter DATA_WIDTH = 1)
 	
 endmodule
 
-module ym_slatch_r2 #(parameter DATA_WIDTH = 1)
+module ymn_slatch_r2 #(parameter DATA_WIDTH = 1)
 	(
 	input MCLK,
 	input en,
