@@ -20,7 +20,7 @@ module ym2602
 	output [7:0] DAC_r,
 	output [7:0] DAC_g,
 	output [7:0] DAC_b,
-	output CSYNC_o,
+	output CSYNC_pull,
 	output PCP,
 	output CBT,
 	output NMI_o,
@@ -645,7 +645,6 @@ module ym2602
 	wire [5:0] w661;
 	wire [5:0] w662;
 	wire [5:0] dac_sel;
-	
 	wire w723;
 	wire w724;
 	wire w725;
@@ -673,6 +672,18 @@ module ym2602
 	wire w748;
 	wire w749;
 	wire w750;
+	wire w751;
+	wire w752;
+	wire w753;
+	wire w754;
+	wire w755;
+	wire w756;
+	wire w757;
+	reg nmi_dff_0, nmi_dff;
+	wire w758;
+	wire w759;
+	wire w760;
+	wire w761;
 	
 	wire sprite0_w604;
 	wire sprite1_w604;
@@ -707,7 +718,7 @@ module ym2602
 	
 	wire [15:0] vram_data;
 	wire [13:0] vram_address;
-	wire [7:0] io_data;
+	reg [7:0] io_data;
 	
 	wire cpu_pal = PAL;
 	wire cpu_rd = RD;
@@ -1766,7 +1777,7 @@ module ym2602
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l418(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w417), .val(w418));
 	
-	assign vram_data[15:8] = w2_h;
+	assign vram_data[15:8] = w2[15:8];
 	
 	wire [15:0] vram_flipped;
 	
@@ -2199,6 +2210,164 @@ module ym2602
 						((dac_sel[5:4] == 2'h2) ? 8'd170 : 8'd0) |
 						((dac_sel[5:4] == 2'h3) ? 8'd170 : 8'd0);
 	
+	ympsg psg(.MCLK(MCLK), .clk(zclk), .reset(RESET), .write(~(cpu_wr | cpu_iorq | cpu_a7 | ~cpu_a6)), .data(io_data),
+		.psg(PSG));
+	
+	ym_sr_bit l751(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w658), .val(w751));
+	
+	ym_dlatch l752(.MCLK(MCLK), .en(hclk1), .inp(reg_80_b0), .val(w752));
+	
+	ym_dlatch l753(.MCLK(MCLK), .en(hclk2), .inp(~(w751 | w752)), .val(w753));
+	
+	assign CSYNC_pull = w753;
+	
+	ym_sr_bit l754(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w659), .val(w754));
+	
+	ym_sr_bit #(.SR_LENGTH(4)) l755(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w754), .val(w755));
+	
+	ym_dlatch l756(.MCLK(MCLK), .en(hclk2), .inp(w754), .val(w756));
+	
+	assign CBT = ~w756;
+	
+	ym_dlatch l757(.MCLK(MCLK), .en(hclk2), .inp(w755), .val(w757));
+	
+	assign PCP = ~w757;
+	
+	always @(posedge MCLK)
+	begin
+		if (~RESET)
+		begin
+			nmi_dff_0 <= 1'h0;
+			nmi_dff <= 1'h0;
+		end
+		else
+		begin
+			if (~w160)
+				nmi_dff_0 <= ~NMI_i;
+			else
+				nmi_dff <= nmi_dff_0;
+		end
+	end
+	
+	assign NMI_o = ~nmi_dff;
+	
+	assign KBSEL = ~(~IORQ & ADDRESS[6] & ADDRESS[7]);
+	assign CSRAM = ~(~MREQ & ADDRESS[14] & ADDRESS[15]);
+	assign EXM1 = ~(~MREQ & ~ADDRESS[14] & ADDRESS[15]);
+	assign EXM2 = ~(~MREQ & ~ADDRESS[15]);
+	
+	ymn_sr_bit l758(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w656), .val(w758));
+	
+	assign YS = w758;
+	
+	ymn_rs_trig rs759(.MCLK(MCLK), .set(w263), .rst(w55), .q(w759));
+	
+	assign w760 = ~(w256 & (w759 | ~reg_80_b4));
+	
+	assign INT = ~w760;
+	
+	assign w761 = w166 & w164_;
+	
+	assign DATA_d = w761;
+	
+	always @(posedge MCLK)
+	begin
+		if (~w761)
+			io_data <= DATA_i;
+		else if (~w164_)
+			io_data <= cpu_a0 ? w60 : w145[7:0];
+		else if (~w254)
+			io_data <= { w252, w251, w250, w275 };
+		else if (~w269)
+			io_data <= w270;
+	end
+	
+	reg [7:0] vram_data_mem;
+	
+	assign vram_data[7:0] = (w32 ? w2[15:8] : 8'hff) &
+									(w34 ? w2[7:0] : 8'hff) &
+									(w265 ? w270 : 8'hff) &
+									(~(w32 | w34 | w265) ? vram_data_mem : 8'hff);
+	always @(posedge MCLK)
+	begin
+		vram_data_mem <= vram_data[7:0];
+	end
+	
+	wire [13:0] va_update = (hclk2 ? 14'h3fff : 14'h0) |
+									(w42 ? 14'h1fc0 : 14'h0) |
+									(w40 ? 14'h0020 : 14'h0) |
+									(w83 ? 14'h00fe : 14'h0) |
+									(w97 ? 14'h007c : 14'h0) |
+									(w88 ? 14'h0380 : 14'h0) |
+									(w105 ? 14'h0003 : 14'h0) |
+									(w103 ? 14'h0003 : 14'h0) |
+									(w107 ? 14'h001c : 14'h0) |
+									(w125 ? 14'h0020 : 14'h0) |
+									(w140 ? 14'h007c : 14'h0) |
+									(w137 ? 14'h007e : 14'h0) |
+									(w237 ? 14'h03ff : 14'h0) |
+									(w243 ? 14'h1800 : 14'h0) |
+									(w234 ? 14'h1807 : 14'h0) |
+									(w249 ? 14'h0007 : 14'h0) |
+									(w246 ? 14'h0007 : 14'h0) |
+									(w226 ? 14'h3c00 : 14'h0) |
+									(w219 ? 14'h3fc0 : 14'h0) |
+									(w224 ? 14'h3800 : 14'h0) |
+									(w222 ? 14'h3f80 : 14'h0) |
+									(w229 ? 14'h3800 : 14'h0) |
+									(w231 ? 14'h3fff : 14'h0) |
+									(w395 ? 14'h07fe : 14'h0) |
+									(w409 ? 14'h001e : 14'h0) |
+									(w434 ? 14'h3fe0 : 14'h0) |
+									(w458 ? 14'h003f : 14'h0) |
+									(w452 ? 14'h07e0 : 14'h0) |
+									(w455 ? 14'h0018 : 14'h0) |
+									(w525 ? 14'h0007 : 14'h0) |
+									(w528 ? 14'h0018 : 14'h0) |
+									(w540 ? 14'h0002 : 14'h0));
+	
+	wire [13:0] va_value =  (w42 ? { 1'h1, w3[7:1], 6'h3f } : 14'h3fff) &
+									(w40 ? { 8'hff, w3[0], 5'h1f } : 14'h3fff) &
+									(w83 ? { 6'h3f, w67[1:0], w63[4:1], 1'h1 } : 14'h3fff) &
+									(w97 ? { 7'h7f, w63[4:2], 2'h3 } : 14'h3fff) &
+									(w88 ? { 4'hf, w63[7:5], 7'h7f } : 14'h3fff) &
+									(w105 ? { 12'hfff, w90[1:0] } : 14'h3fff) &
+									(w103 ? { 14'h3ffc } : 14'h3fff) &
+									(w107 ? { 9'h1ff, w117_0[2:0], 2'h3 } : 14'h3fff) &
+									(w125 ? { 8'hff, w117_0[3], 5'h1f } : 14'h3fff) &
+									(w140 ? { 7'h7f, w131_0[5:1], 2'h3 } : 14'h3fff) &
+									(w137 ? { 7'h7e, w131_0[5:0], 1'h1 } : 14'h3fff) &
+									(w237 ? { 4'hf, w145[7:3], w313[7:3] } : 14'h3fff) &
+									(w243 ? { 1'h1, w145[7:6], 11'h7ff } : 14'h3fff) &
+									(w234 ? { 1'h1, w145[7:6], 8'hff, w145[2:0] } : 14'h3fff) &
+									(w249 ? { 11'h7ff, w145[4:2] } : 14'h3fff) &
+									(w246 ? { 11'h7ff, w145[2:0] } : 14'h3fff) &
+									(w226 ? { reg_nt, 10'h3ff } : 14'h3fff) &
+									(w219 ? { reg_ct, 6'h3f } : 14'h3fff) &
+									(w224 ? { reg_bg, 11'h7ff } : 14'h3fff) &
+									(w222 ? { reg_sat, 7'7f } : 14'h3fff) &
+									(w229 ? { reg_spr, 11'h7ff } : 14'h3fff) &
+									(w231 ? reg_addr : 14'h3fff) &
+									(w395 ? { 3'h7, w411[2:0], w402[4:3], w396[4:0], 1'h1 } : 14'h3fff) &
+									(w409 ? { 9'h1ff, w406[2:0], w405, 1'h1 } : 14'h3fff) &
+									(w434 ? { w430[8:0], 5'h1f } : 14'h3fff) &
+									(w458 ? { 8'hff, 1'h0, w449[7:3] } : 14'h3fff) &
+									(w452 ? { 3'h7, w449[7:2], 5'h1f } : 14'h3fff) &
+									(w455 ? { 9'h1ff, w449[1:0], 3'h7 } : 14'h3fff) &
+									(w525 ? { 11'h7ff, w522_0[2:0] } : 14'h3fff) &
+									(w528 ? { 9'h1ff, ~w313[1], w522_0[3] } : 14'h3fff) &
+									(w540 ? { 12'hfff, ~w537[1], 1'h1 } : 14'h3fff));
+	
+	reg [13:0] vram_address_mem;
+	
+	assign vram_address = (va_update & va_value)
+								| (~va_update ? va_address_mem);
+	
+	always (@posedge MCLK)
+	begin
+		vram_address_mem <= vram_address;
+	end
+	
 endmodule
 
 module sprite_unit1
@@ -2361,6 +2530,8 @@ module sprite_unit1
 	
 	assign w606 = w605 & hclk2;
 	
+	assign DATA_o = io_data;
+	
 endmodule
 
 module sprite_unit2
@@ -2478,9 +2649,6 @@ module sprite_unit2
 	ymn_dlatch l640(.MCLK(MCLK), .en(hclk1), .inp(i3), .val(w640));
 	
 	assign w638 = w640 & hclk2;
-	
-	ympsg psg(.MCLK(MCLK), .clk(zclk), .reset(RESET), .write(~(cpu_wr | cpu_iorq | cpu_a7 | ~cpu_a6)), .data(io_data),
-		.psg(PSG));
 	
 endmodule
 
