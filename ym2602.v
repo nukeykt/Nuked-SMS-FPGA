@@ -446,6 +446,158 @@ module ym2602
 	wire w385;
 	wire w386;
 	wire w387;
+	wire [7:0] w388;
+	wire [7:0] w389;
+	wire [7:0] w390;
+	wire w391;
+	wire w392;
+	wire w393;
+	wire w394;
+	wire w395;
+	wire [4:0] w396;
+	wire [7:0] w397;
+	wire [7:0] w398;
+	wire w399;
+	wire [7:0] w401;
+	wire [8:0] w402;
+	wire w403;
+	wire w404;
+	wire w405;
+	wire [2:0] w406;
+	wire w407;
+	wire w408;
+	wire w409;
+	wire w410;
+	wire [2:0] w411;
+	wire w412
+	wire w413;
+	wire w414;
+	wire w415;
+	wire w416;
+	wire w417;
+	wire w418;
+	wire [15:0] w419;
+	wire [15:0] w420;
+	wire [15:0] w421;
+	wire [15:0] w422;
+	wire [15:0] w423;
+	wire [15:0] w424;
+	wire [15:0] w425;
+	wire [1:0] w426;
+	wire [1:0] w427;
+	wire w428;
+	wire w429;
+	wire [8:0] w430;
+	wire [3:0] w431;
+	wire w432;
+	wire w433;
+	wire w434;
+	wire w435;
+	wire w436;
+	wire color_palette;
+	wire w437;
+	wire w438;
+	wire [1:0] w438_;
+	wire [1:0] w439;
+	wire [1:0] w440;
+	wire [3:0] w441;
+	wire [3:0] w442;
+	wire w443;
+	wire w444;
+	wire w445;
+	wire w446;
+	wire w447;
+	wire w448;
+	reg [7:0] w449;
+	wire w450;
+	wire w451;
+	wire w452;
+	wire w453;
+	wire w454;
+	wire w455;
+	wire w456;
+	wire w457;
+	wire w458;
+	wire [3:0] reg_bc;
+	wire [3:0] reg_fc;
+	wire w459;
+	wire w460;
+	wire w461;
+	wire w462;
+	wire w463;
+	wire w464;
+	wire w465;
+	wire w466;
+	wire w467;
+	wire w468;
+	wire w469;
+	wire w470;
+	wire w471;
+	wire w472;
+	wire w473;
+	wire w474;
+	wire w475;
+	wire w476;
+	wire w477;
+	reg [7:0] w478;
+	wire [7:0] w479;
+	wire w480;
+	wire w481;
+	wire w482;
+	wire w483;
+	wire [7:0] w484;
+	wire [7:0] w485;
+	wire w486;
+	wire w487;
+	wire [7:0] w488;
+	wire w489;
+	wire [5:0] w490;
+	wire w491;
+	wire [2:0] w492;
+	wire [4:0] w491;
+	wire [2:0] w494;
+	wire w495;
+	wire [3:0] w496;
+	wire w497;
+	wire w498;
+	wire w499;
+	wire w501_3, w501;
+	wire w501;
+	wire w502;
+	wire w503;
+	wire w504;
+	wire w505;
+	wire w506;
+	wire w507;
+	wire w508;
+	wire w509;
+	wire w510;
+	wire w511;
+	wire w512;
+	wire w513;
+	wire w514;
+	wire w515;
+	wire w516;
+	wire w517;
+	wire w518;
+	wire w519;
+	wire w520;
+	wire w521;
+	wire [3:0] w522_0, w522;
+	wire w523;
+	wire w524;
+	wire w525;
+	wire w526;
+	wire w527;
+	wire w528;
+	wire w529;
+	wire [4:0] w530;
+	wire [4:0] w531_0, w531;
+	wire [4:0] w532;
+	wire [4:0] w533;
+	wire [4:0] w534;
+	wire [4:0] w535;
+	
 	
 	wire w723;
 	wire w724;
@@ -1488,6 +1640,319 @@ module ym2602
 	ymn_rs_trig rs386(.MCLK(MCLK), .set(w376 | (~w334 & w377 & ~reg_80_b5)), .rst(w375 | (w374 & ~w334)), .q(w386));
 	
 	assign w387 = w386 & reg_81_b6 & w159;
+	
+	ymn_slatch_r2 #(.DATA_WIDTH(8)) l388(.MCLK(MCLK), .en(reg_sel[8]), .rst(reset1), .inp(reg_addr[7:0]), .val(w388));
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l389(.MCLK(MCLK), .en(w370), .inp(w388), .val(w389));
+	
+	assign w390 = w404 ? 8'h0 : w389;
+	
+	ymn_dlatch l391(.MCLK(MCLK), .en(hclk1), .inp(w390[2:0] == w313[2:0]), .val(w391));
+	
+	assign w392 = ~(w391 & reg_80_b2);
+	
+	ymn_dlatch l393(.MCLK(MCLK), .en(hclk1), .inp(w343[12]), .val(w393));
+	
+	ymn_dlatch l394(.MCLK(MCLK), .en(hclk2), .inp(w393 & reg_80_b2), .val(w394));
+	
+	assign w395 = w394 & hclk1;
+	
+	assign w396 = w313[7:3] + ~w390[7:3] + 5'h1;
+	
+	ymn_slatch_r2 #(.DATA_WIDTH(8)) l397(.MCLK(MCLK), .en(reg_sel[9]), .rst(reset1), .inp(reg_addr[7:0]), .val(w397));
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l398(.MCLK(MCLK), .en(w403), .inp(w397), .val(w398));
+	
+	assign w399 = ~(reg_80_b7 & w313[7:6] == 2'h3);
+	
+	ymn_sr_bit l400(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w399), .val(w400));
+	
+	assign w401 = w400 ? w398 : 8'h0;
+	
+	assign w402 = { 1'h0, w401 } + { 1'h0, w143[7:0] };
+	
+	assign w403 = w370 & w160;
+	
+	assign w404 = reg_80_b6 & w143[7:4] == 4'h0;
+	
+	ymn_sr_bit l405(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w343[7]), .val(w405));
+	
+	assign w406 = ~w431[1] ? ~w402[2:0] : w402[2:0];
+	
+	assign w407 = ~(reg_80_b2 & (w343[6] | w343[7]));
+	
+	ymn_sr_bit l408(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w407), .val(w408));
+	
+	assign w409 = w408 & hclk1;
+	
+	assign w410 = ~w402[8] & w402[7:5] != 3'h7;
+	
+	assign w411 = w402[7:5] + { 2'h0, ~w410 };
+	
+	ymn_dlatch l412(.MCLK(MCLK), .en(hclk1), .inp(w445), .val(w412));
+	
+	assign w413 = w412 & hclk2;
+	
+	ymn_dlatch l414(.MCLK(MCLK), .en(hclk1), .inp(w446), .val(w414));
+	
+	assign w415 = w414 & hclk2;
+	
+	assign w416 = w431[0];
+	
+	ymn_dlatch l417(.MCLK(MCLK), .en(hclk2), .inp(~w392), .val(w417));
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l418(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w417), .val(w418));
+	
+	assign vram_data[15:8] = w2_h;
+	
+	wire [15:0] vram_flipped;
+	
+	genvar i;
+	
+	generate
+		for (i = 0; i < 8; i = i + 1)
+		begin
+			assign vram_flipped[i] = vram_data[7-i];
+			assign vram_flipped[i+8] = vram_data[15-i];
+		end
+	endgenerate
+	
+	assign w419 = w416 ? vram_data : vram_flipped;
+	
+	ymn_dlatch #(.DATA_WIDTH(16)) l420(.MCLK(MCLK), .en(w413), .inp(w419), .val(w420));
+	ymn_dlatch #(.DATA_WIDTH(16)) l421(.MCLK(MCLK), .en(w415), .inp(w419), .val(w421));
+	
+	ymn_dlatch #(.DATA_WIDTH(16)) l422(.MCLK(MCLK), .en(hclk2), .inp({ w424[14:8], 1'h0, w424[6:0], 1'h0 }), .val(w422));
+	ymn_dlatch #(.DATA_WIDTH(2)) l439(.MCLK(MCLK), .en(hclk2), .inp({ w424[15], w424[7] }), .val(w439));
+	ymn_dlatch #(.DATA_WIDTH(16)) l423(.MCLK(MCLK), .en(hclk2), .inp({ w425[14:8], 1'h0, w425[6:0], 1'h0 }), .val(w423));
+	ymn_dlatch #(.DATA_WIDTH(2)) l440(.MCLK(MCLK), .en(hclk2), .inp({ w425[15], w425[7] }), .val(w440));
+	
+	ymn_dlatch #(.DATA_WIDTH(16)) l424(.MCLK(MCLK), .en(hclk1), .inp(w417 ? w420 : w422), .val(w424));
+	ymn_dlatch #(.DATA_WIDTH(16)) l425(.MCLK(MCLK), .en(hclk1), .inp(w418 ? w421 : w423), .val(w425));
+	
+	ymn_dlatch #(.DATA_WIDTH(2)) l426(.MCLK(MCLK), .en(w415), .inp(~w431[3:2]), .val(w426));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(2)) l427(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w418 ? w426 : w427), .val(w427));
+	
+	ymn_dlatch l428(.MCLK(MCLK), .en(hclk1), .inp(reg_80_b2 & w364), .val(w428));
+	
+	assign w429 = w428 ? hclk2;
+	
+	ymn_dlatch #(.DATA_WIDTH(9)) l430(.MCLK(MCLK), .en(w429), .inp(vram_data[8:0]), .val(w430));
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l431(.MCLK(MCLK), .en(w429), .inp(~vram_data[12:9]), .val(w431));
+	
+	ymn_dlatch l432(.MCLK(MCLK), .en(hclk1), .inp(~(reg_80_b2 & (w343[6] | w343[7]))), .val(w432));
+	
+	ymn_dlatch l433(.MCLK(MCLK), .en(hclk2), .inp(~w432), .val(w433));
+	
+	assign w434 = w433 & hclk1;
+	
+	ymn_sr_bit l435(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w427[0]), .val(w435));
+	
+	assign w436 = ~(w560[3] & w435);
+	
+	ymn_dlatch l_color_palette(.MCLK(MCLK), .en(hclk1), .inp(w436), .val(color_palette));
+	
+	ymn_dlatch l437(.MCLK(MCLK), .en(hclk1), .inp(w560[3]), .val(w437));
+	
+	assign w438 = w437 & hclk2;
+	
+	ymn_sr_bit_array #(.SR_LENGTH(2), .DATA_WIDTH(2)) l438_(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w439), .val(w438_));
+	
+	assign w441 = { w440, w438_ };
+	
+	ymn_sr_bit_array #(.SR_LENGTH(2), .DATA_WIDTH(4)) l442(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w441), .val(w442));
+	
+	ymn_dlatch l443(.MCLK(MCLK), .en(hclk2), .inp(w441 == 4'h0), .val(w443));
+	
+	assign w445 = reg_80_b2 & w358;
+	assign w446 = reg_80_b2 & w359;
+	
+	
+	ymn_dlatch l447(.MCLK(MCLK), .en(hclk1), .inp(w364), .val(w447));
+	
+	assign w448 = w447 & hclk2;
+	
+	always @(posedge MCLK)
+	begin
+		if (w448)
+			w449 <= vram_data[7:0];
+	end
+	
+	ymn_dlatch l450(.MCLK(MCLK), .en(hclk1), .inp(~reg_80_b2 & ((reg_80_b1 & w343[6]) | w343[9])), .val(w450));
+	ymn_dlatch l451(.MCLK(MCLK), .en(hclk2), .inp(w450), .val(w451));
+	
+	assign w452 = w451 & hclk1;
+	
+	ymn_dlatch l453(.MCLK(MCLK), .en(hclk1), .inp(~reg_80_b2 & ((reg_80_b1 & w343[6]) | w343[7] | (~reg_81_b1 & w343[8]))), .val(w453));
+	ymn_dlatch l454(.MCLK(MCLK), .en(hclk2), .inp(w453), .val(w454));
+	
+	assign w455 = w454 & hclk1;
+	
+	ymn_dlatch l456(.MCLK(MCLK), .en(hclk1), .inp(~reg_80_b2 & ~reg_80_b1 & w343[6]), .val(w456));
+	ymn_dlatch l457(.MCLK(MCLK), .en(hclk2), .inp(w456), .val(w457));
+	assign w458 = w457 & hclk1;
+	
+	ymn_slatch_r2 #(.DATA_WIDTH(4)) l_reg_bc(.MCLK(MCLK), .en(reg_sel[7]), .inp(reg_addr[3:0]), .rst(reset1), .val(reg_bc));
+	ymn_slatch_r2 #(.DATA_WIDTH(4)) l_reg_fc(.MCLK(MCLK), .en(reg_sel[7]), .inp(reg_addr[7:4]), .rst(reset1), .val(reg_fc));
+	
+	assign w459 = reg_fc != 4'h0;
+	
+	ymn_dlatch l460(.MCLK(MCLK), .en(hclk1), .inp(w560[4]), .val(w460));
+	assign w461 = w460 & hclk2;
+	
+	ymn_dlatch l462(.MCLK(MCLK), .en(hclk1), .inp(w560[2]), .val(w462));
+	assign w463 = w462 & hclk2;
+	
+	assign w464 = ~(w465 | ~reg_81_b3);
+	
+	assign w465 = ~(reg_81_b6 & w164);
+	
+	assign w466 = ~w465;
+	
+	assign w467 = ~reg_81_b4 & ~w465;
+	
+	assign w468 = ~w467;
+	
+	assign w469 = ~w465 & reg_81_b4;
+	
+	assign w470 = ~reg_80_b2;
+	
+	ymn_dlatch l471(.MCLK(MCLK), .en(hclk1), .inp(~(w359 & w470)), .val(w471));
+	
+	assign w472 = ~(w359 & w470);
+	
+	ymn_dlatch l473(.MCLK(MCLK), .en(hclk1), .inp(~(w472 | w464)), .val(w473));
+	
+	ymn_dlatch l474(.MCLK(MCLK), .en(hclk1), .inp(~(w472 | ~w464)), .val(w474));
+	
+	assign w475 = w471 & hclk2;
+	assign w476 = w473 & hclk2;
+	assign w477 = w474 & hclk2;
+	
+	always @(posedge MCLK)
+	begin
+		if (w476)
+			w478 <= vram_data[7:0];
+		else if (w477)
+			w478 <= 8'hf0;
+		else if (w478)
+			w478 <= { w479[6:0], 1'h0 };
+	end
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l479(.MCLK(MCLK), .en(hclk1), .inp(w478), .val(w479));
+	
+	ymn_dlatch l480(.MCLK(MCLK), .en(hclk2), .inp(~w479[7]), .val(w480));
+	
+	assign w481 = w93 | w501_3;
+	
+	ymn_dlatch l482(.MCLK(MCLK), .en(hclk1), .inp(w481), .val(w482));
+	
+	assign w483 = w482 & hclk2;
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l484(.MCLK(MCLK), .en(w483), .inp(vram_data[7:0]), .val(w484));
+	ymn_dlatch #(.DATA_WIDTH(8)) l484(.MCLK(MCLK), .en(w483), .inp(vram_data[15:8]), .val(w485));
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l486(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w487), .val(w486));
+	
+	assign w487 = w481 & reg_80_b2;
+	
+	assign w488 = w486 ? w485 : w484;
+	
+	assign w489 = w488 == 8'd208 & ~w505;
+	
+	assign w490 = { 1'h0, w145[4:0] } + { 1'h0, ~w488[4:0] } + 5'h1;
+	
+	ymn_dlatch l491(.MCLK(MCLK), .en(hclk1), .inp(w490[5]), .val(w491));
+	
+	ymn_dlatch #(.DATA_WIDTH(3)) l492(.MCLK(MCLK), .en(hclk1), .inp(w488[7:5]), .val(w492));
+	
+	ymn_dlatch #(.DATA_WIDTH(5)) l493(.MCLK(MCLK), .en(hclk1), .inp(w490[4:0]), .val(w493));
+	
+	assign w494 = w145[7:5] + ~w492 + { 2'h0, w491 };
+	
+	assign w495 = w494 == 3'h0 & ~w506 & (~w497 | ~w493[4]) & (~w498 | ~w493[3]);
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l496(.MCLK(MCLK), .en(hclk2), .inp(reg_81_b0 ? w493[4:1] : w493[3:0]), .val(w496));
 
+	assign w497 = ~(reg_81_b0 & reg_81_b1);
+	
+	assign w498 = ~(reg_81_b0 | reg_81_b1);
+	
+	assign w499 = (w160 | w159) & w500;
+	
+	ymn_sr_bit l500(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w343[2]), .val(w500));
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l501_3(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w499), .val(w501_3));
+	ymn_sr_bit l501(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w501_3), .val(w501));
+	
+	assign w502 = ~w499 & ~w501_3;
+	
+	assign w503 = ~(w501 & reg_80_b2);
+	
+	ymn_sr_bit l504(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w503), .val(w504));
+	
+	assign w505 = ~(w504 | w501);
+	
+	ymn_dlatch l506(.MCLK(MCLK), .en(hclk1), .inp(w505 | ~w510), .val(w506));
+	
+	ymn_dlatch l507(.MCLK(MCLK), .en(hclk2), .inp(~w495), .val(w507));
+	
+	assign w508 = ~w507 & ~w123;
+	assign w509 = w123 & ~w507;
+	
+	ymn_rs_trig rs510(.MCLK(MCLK), .set(w515), .rst(w512 | w520), .q(w510));
+	
+	assign w511 = w509 | ~w510 | w502;
+	
+	ymn_sr_bit l512(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w509), .val(w512));
+	
+	ymn_rs_trig rs513(.MCLK(MCLK), .set(w515), .rst(w512), .q(w513));
+	
+	assign w514 = ~w370;
+	
+	ymn_sr_bit l515(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w514), .val(w515));
+	
+	assign w516 = ~(w513 | w514);
+	
+	assign w517 = ~(w546 | (w94 & ~reg_80_b2));
+	
+	assign w518 = w517;
+	
+	assign w519 = w518 & ~w508;
+	
+	ymn_sr_bit l520(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w489), .val(w520));
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l521(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w481), .val(w521));
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l522_0(.MCLK(MCLK), .en(hclk1), .inp(w521 ? w496 : w522), .val(w522_0));
+	ymn_dlatch #(.DATA_WIDTH(4)) l522(.MCLK(MCLK), .en(hclk2), .inp(w522_0), .val(w522));
+	
+	assign w523 = ~(~reg_80_b2 & w343[8]);
+	
+	ymn_sr_bit l524(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w523), .val(w524));
+	assign w525 = w524 & hclk1;
+	
+	assign w526 = ~(~reg_80_b2 & w343[8] & reg_81_b1);
+	
+	ymn_sr_bit l527(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w526), .val(w527));
+	assign w528 = w527 & jclk1;
+	
+	ymn_dlatch l529(.MCLK(MCLK), .en(hclk1), .inp(w511), .val(w529));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(5)) l530(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w529 ? w530 : w535), .val(w530));
+	
+	ymn_dlatch #(.DATA_WIDTH(5)) l531_0(.MCLK(MCLK), en(hclk2), .inp(w529 ? w531 : w530), .val(w531_0));
+	ymn_dlatch #(.DATA_WIDTH(5)) l531(.MCLK(MCLK), .en(hclk1), .inp(w531_0), .val(w531));
+	
+	assign w532 = w531;
+	assign w533 = w531_0;
+	
+	assign w534 = reg_80_b2 ? vram_address[5:1] : vram_address[6:2];
+	
+	ymn_dlatch #(.DATA_WIDTH(5)) l535(.MCLK(MCLK), .en(hclk1), .inp(w534), .val(w535));
+	
+	
 endmodule
 
