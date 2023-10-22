@@ -117,6 +117,26 @@ module ym2413
 	wire car_sel_custom;
 	wire rom_sel1;
 	wire rom_sel2;
+	wire key_on_comb;
+	wire ch_addr_valid
+	wire ch_addr_valid_l;
+	wire [5:0] ch_reg_addr;
+	wire [7:0] ch_reg_data;
+	wire ch_data_valid
+	wire ch_data_enable_l;
+	wire ch_data_enable;
+	wire ch_data_enable2;
+	wire [4:0] ch_idx;
+	wire [3:0] ch_idx_c;
+	wire ch_write10;
+	wire ch_write20;
+	wire ch_write30;
+	wire [7:0] reg_10_0, reg_10_1, reg_10_2, reg_10_3, reg_10;
+	wire [5:0] reg_20_0, reg_20_1, reg_20_2, reg_20_3, reg_20;
+	wire [7:0] reg_30_0, reg_30_1, reg_30_2, reg_30_3, reg_30;
+	wire [8:0] fnum;
+	wire [2:0] blk;
+	wire sus_on;
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l_ic_latch(.MCLK(MCLK), .c1(mclk1), .c2(mclk2), .inp(reset), .val(ic_latch));
 	
@@ -359,6 +379,73 @@ module ym2413
 			instr_data_l <= fsm_sel[6] ? instr_data_m : instr_data_c;
 		end
 	end
+	
+	assign key_on_comb = key_on | (rhy_bd0 & bass_drum) | (rhy_hh & high_hat) | (rhy_tom & tom_tom)
+							| (rhy_bd1 & bass_drum) | (rhy_sd & snare_drum) | (rhy_tc & top_cymbal);
+	
+	
+	assign ch_addr_valid = data_reg[7:6] == 2'h0;
+	
+	assign ch_data_valid = ch_addr_valid_l & write1;
+	
+	ymn_slatch_r l_ch_addr_valid(.MCLK(MCLK), .en(~write0), .inp(ch_addr_valid), .rst(reset), .val(ch_addr_valid_l));
+	
+	ymn_slatch #(.DATA_WIDTH(6)) l_ch_reg_addr(.MCLK(MCLK), .en(~write0 & ch_addr_valid), .inp(data_reg[5:0]), .val(ch_reg_addr));
+	
+	ymn_slatch_r2 #(.DATA_WIDTH(8)) l_ch_reg_data(.MCLK(MCLK), .en(ch_data_valid), .inp(data_reg), .rst(reset), .val(ch_reg_data));
+	
+	ymn_sr_bit l_ch_data_enable(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(~(ch_data_valid | ch_data_enable)), .val(ch_data_enable_l));
+	
+	assign ch_data_enable = ~(ch_data_enable_l | reset | ~write0);
+	
+	cnt_bit_2 ch_idx0(.c_in(1'h1), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[0]), .c_out(ch_idx_c[0]));
+	cnt_bit_2 ch_idx1(.c_in(ch_idx_c[0]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[1]), .c_out(ch_idx_c[1]));
+	cnt_bit_2 ch_idx2(.c_in(ch_idx_c[1]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[2]), .c_out(ch_idx_c[2]));
+	cnt_bit_2 ch_idx3(.c_in(ch_idx_c[2]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[3]), .c_out(ch_idx_c[3]));
+	cnt_bit_2 ch_idx4(.c_in(ch_idx_c[3]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[4]));
+	
+	assign ch_data_enable2 = ch_data_enable & (~ch_idx == { 1'h0, ch_reg_addr[3:0] });
+	
+	assign ch_write10 = (ch_data_enable2 & ch_reg_addr[5:4] == 2'h1) | reset;
+	assign ch_write20 = (ch_data_enable2 & ch_reg_addr[5:4] == 2'h2) | reset;
+	assign ch_write30 = (ch_data_enable2 & ch_reg_addr[5:4] == 2'h3) | reset;
+	
+	ymn_sr_bit_array #(.SR_LENGTH(2), .DATA_WIDTH(8)) l_reg_10_0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(ch_write10 ? ch_reg_data : reg_10_3), .val(reg_10_0));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(8)) l_reg_10_1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_10_0), .val(reg_10_1));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(8)) l_reg_10_2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_10_1), .val(reg_10_2));
+	ymn_sr_bit_array #(.DATA_WIDTH(8)) l_reg_10_3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_10_2), .val(reg_10_3));
+	
+	ymn_sr_bit_array #(.SR_LENGTH(2), .DATA_WIDTH(6)) l_reg_20_0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(ch_write20 ? ch_reg_data[5:0] : reg_20_3), .val(reg_20_0));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(6)) l_reg_20_1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_20_0), .val(reg_20_1));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(6)) l_reg_20_2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_20_1), .val(reg_20_2));
+	ymn_sr_bit_array #(.DATA_WIDTH(6)) l_reg_20_3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_20_2), .val(reg_20_3));
+	
+	ymn_sr_bit_array #(.SR_LENGTH(2), .DATA_WIDTH(8)) l_reg_30_0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(ch_write30 ? ch_reg_data : reg_30_3), .val(reg_30_0));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(8)) l_reg_30_1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_30_0), .val(reg_30_1));
+	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(8)) l_reg_30_2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_30_1), .val(reg_30_2));
+	ymn_sr_bit_array #(.DATA_WIDTH(8)) l_reg_30_3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_30_2), .val(reg_30_3));
+	
+	assign reg_10 = (fsm_sel[8] ? reg_10_0 : 8'h0) |
+						 (fsm_sel[7] ? reg_10_1 : 8'h0) |
+						 (fsm_sel[12] ? reg_10_2 : 8'h0);
+	
+	assign reg_20 = (fsm_sel[8] ? reg_20_0 : 8'h0) |
+						 (fsm_sel[7] ? reg_20_1 : 8'h0) |
+						 (fsm_sel[12] ? reg_20_2 : 8'h0);
+	
+	assign reg_30 = (fsm_sel[8] ? reg_30_0 : 8'h0) |
+						 (fsm_sel[7] ? reg_30_1 : 8'h0) |
+						 (fsm_sel[12] ? reg_30_2 : 8'h0);
+	
+	assign fnum = { reg_20[0], reg_10 };
+	
+	assign blk = reg_20[3:1];
+	
+	assign key_on = reg_20[4];
+	assign sus_on = reg_20[5];
+	
+	assign instr = reg_30[7:4];
+	
 	
 endmodule
 
