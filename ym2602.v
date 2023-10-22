@@ -2368,6 +2368,35 @@ module ym2602
 		vram_address_mem <= vram_address;
 	end
 	
+	reg [3:0] color_index_mem;
+	
+	assign color_index = (w293 ? w286[7:4] : 4'hf) &
+								(w295 ? w286[3:0] : 4'hf) &
+								(w438 ? w442 : 4'hf) &
+								(w461 ? reg_bc : 4'hf) &
+								(w463 ? reg_fc : 4'hf) &
+								(sprite0_w564 ? sprite0_w568 : 4'hf) &
+								(sprite0_w606 ? sprite0_w639 : 4'hf) &
+								(sprite1_w564 ? sprite1_w568 : 4'hf) &
+								(sprite1_w606 ? sprite1_w639 : 4'hf) &
+								(sprite2_w564 ? sprite2_w568 : 4'hf) &
+								(sprite2_w606 ? sprite2_w639 : 4'hf) &
+								(sprite3_w564 ? sprite3_w568 : 4'hf) &
+								(sprite3_w606 ? sprite3_w639 : 4'hf) &
+								(sprite4_w638 ? sprite4_w637 : 4'hf) &
+								(sprite5_w638 ? sprite5_w637 : 4'hf) &
+								(sprite6_w638 ? sprite6_w637 : 4'hf) &
+								(sprite7_w638 ? sprite7_w637 : 4'hf) &
+								(~(w293|w295|hclk1|w438|w461|w463|
+									sprite0_w564|sprite0_w606|sprite1_w564|sprite1_w606|
+									sprite2_w564|sprite2_w606|sprite3_w564|sprite3_w606|
+									sprite4_w638|sprite5_w638|sprite6_w638|sprite7_w638) ? color_index_mem : 4'hf);
+	
+	always (@posedge MCLK)
+	begin
+		color_index_mem <= color_index;
+	end
+	
 endmodule
 
 module sprite_unit1
