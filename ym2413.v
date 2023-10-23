@@ -164,6 +164,60 @@ module ym2413
 	wire phase_reset;
 	wire phase_reset_l;
 	wire modcar_sel_rhy;
+	reg rh_hh_bit2;
+	reg rh_hh_bit3;
+	reg rh_hh_bit7;
+	reg rh_hh_bit8;
+	reg rh_tc_bit3;
+	reg rh_tc_bit5;
+	wire rh_sel_hh_l;
+	wire rh_sel_tc_l;
+	wire rh_sel_hh;
+	wire rh_sel_tc;
+	wire rh_sel_sd;
+	wire [9:0] pg_out;
+	wire rm_noise;
+	wire rm_bit;
+	wire rm_hh_val;
+	wire [22:0] noise_lfsr;
+	wire [9:0] pg_dbg;
+	wire trem_sync_l;
+	wire trem_clk;
+	wire trem_dir;
+	wire [8:0] trem_val;
+	wire trem_of;
+	wire [1:0] trem_sum;
+	wire [3:0] trem_out;
+	wire trem_load_l;
+	reg [6:0] ksl_table;
+	wire [3:0] ksl_block_add;
+	wire [5:0] ksl_block;
+	wire [5:0] ksl_block_l;
+	wire [6:0] ksl_shift;
+	wire [7:0] ksl_tl;
+	wire [7:0] ksl_tl_l;
+	wire tremolo_l;
+	wire [7:0] ksl_tl_trem;
+	wire ksl_tl_trem_of;
+	wire [16:0] eg_timer_1, eg_timer_2;
+	wire [1:0] eg_timer_sum;
+	wire eg_timer_sync;
+	wire eg_subcnt_sel1;
+	wire eg_subcnt_sel2;
+	wire eg_timer_carry;
+	wire eg_timer_rst0, eg_timer_rst;
+	wire eg_timer_bit0, eg_timer_bit1, eg_timer_bit;
+	wire eg_timer_mask;
+	wire [1:0] eg_subcnt;
+	wire eg_subcnt_c;
+	wire eg_subcnt_sel1_l;
+	wire eg_subcnt_sel2_l;
+	wire eg_timer_load;
+	wire eg_timer_load_l;
+	wire eg_timer_load2;
+	wire [16:0] eg_timer_masked_1, eg_timer_masked_2;
+	wire [3:0] eg_timer_shift;
+	wire [1:0] eg_timer_low;
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l_ic_latch(.MCLK(MCLK), .c1(mclk1), .c2(mclk2), .inp(reset), .val(ic_latch));
 	
@@ -248,8 +302,8 @@ module ym2413
 	// 2 - dac_load
 	// 3 - modcar_sel
 	// 4 - sync16
-	// 5 -
-	// 6 -
+	// 5 - sync13
+	// 6 - sync10
 	// 7 - chan_sel1
 	// 8 - chan_sel2
 	// 9 - tremolo_sync
@@ -327,7 +381,7 @@ module ym2413
 	assign test2 = regs_e_v[2];
 	assign test3 = regs_e_v[3];
 	
-	ymn_sr_bit l_rhy_sel0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_sel[6]), .val(rhy_sel0));
+	ymn_sr_bit l_rhy_sel0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[6]), .val(rhy_sel0));
 	ymn_sr_bit l_rhy_sel1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_sel0 & rhythm), .val(rhy_bd0));
 	ymn_sr_bit l_rhy_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_bd0), .val(rhy_hh));
 	ymn_sr_bit l_rhy_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_hh), .val(rhy_tom));
@@ -337,7 +391,7 @@ module ym2413
 	
 	ymn_dlatch inst_hh_tom(.MCLK(MCLK), .en(clk1), .inp(rhy_hh | rhy_tom), .val(inst_hh_tom_l));
 	ymn_dlatch inst_kon(.MCLK(MCLK), .en(clk1), .inp(key_on), .val(inst_kon_l));
-	ymn_dlatch inst_mc(.MCLK(MCLK), .en(clk1), .inp(fsm_sel[3]), .val(inst_mc_l));
+	ymn_dlatch inst_mc(.MCLK(MCLK), .en(clk1), .inp(fsm_out[3]), .val(inst_mc_l));
 	ymn_dlatch inst_cust(.MCLK(MCLK), .en(clk1), .inp(inst == 4'h0), .val(inst_cust_l));
 	
 	assign force_zerorate = ~inst_hh_tom_l & ~inst_kon_l & inst_mc_l;
@@ -405,7 +459,7 @@ module ym2413
 		end
 		if (clk1)
 		begin
-			instr_data_l <= fsm_sel[6] ? instr_data_m : instr_data_c;
+			instr_data_l <= fsm_out[6] ? instr_data_m : instr_data_c;
 		end
 	end
 	
@@ -427,11 +481,11 @@ module ym2413
 	
 	assign ch_data_enable = ~(ch_data_enable_l | reset | ~write0);
 	
-	cnt_bit_2 ch_idx0(.c_in(1'h1), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[0]), .c_out(ch_idx_c[0]));
-	cnt_bit_2 ch_idx1(.c_in(ch_idx_c[0]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[1]), .c_out(ch_idx_c[1]));
-	cnt_bit_2 ch_idx2(.c_in(ch_idx_c[1]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[2]), .c_out(ch_idx_c[2]));
-	cnt_bit_2 ch_idx3(.c_in(ch_idx_c[2]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[3]), .c_out(ch_idx_c[3]));
-	cnt_bit_2 ch_idx4(.c_in(ch_idx_c[3]), .reset(fsm_sel[10]), .c1(clk1), .c2(clk2), .val(ch_idx[4]));
+	cnt_bit_2 ch_idx0(.c_in(1'h1), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[0]), .c_out(ch_idx_c[0]));
+	cnt_bit_2 ch_idx1(.c_in(ch_idx_c[0]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[1]), .c_out(ch_idx_c[1]));
+	cnt_bit_2 ch_idx2(.c_in(ch_idx_c[1]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[2]), .c_out(ch_idx_c[2]));
+	cnt_bit_2 ch_idx3(.c_in(ch_idx_c[2]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[3]), .c_out(ch_idx_c[3]));
+	cnt_bit_2 ch_idx4(.c_in(ch_idx_c[3]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[4]));
 	
 	assign ch_data_enable2 = ch_data_enable & (~ch_idx == { 1'h0, ch_reg_addr[3:0] });
 	
@@ -454,17 +508,17 @@ module ym2413
 	ymn_sr_bit_array #(.SR_LENGTH(3), .DATA_WIDTH(8)) l_reg_30_2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_30_1), .val(reg_30_2));
 	ymn_sr_bit_array #(.DATA_WIDTH(8)) l_reg_30_3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(reg_30_2), .val(reg_30_3));
 	
-	assign reg_10 = (fsm_sel[8] ? reg_10_0 : 8'h0) |
-						 (fsm_sel[7] ? reg_10_1 : 8'h0) |
-						 (fsm_sel[12] ? reg_10_2 : 8'h0);
+	assign reg_10 = (fsm_out[8] ? reg_10_0 : 8'h0) |
+						 (fsm_out[7] ? reg_10_1 : 8'h0) |
+						 (fsm_out[12] ? reg_10_2 : 8'h0);
 	
-	assign reg_20 = (fsm_sel[8] ? reg_20_0 : 8'h0) |
-						 (fsm_sel[7] ? reg_20_1 : 8'h0) |
-						 (fsm_sel[12] ? reg_20_2 : 8'h0);
+	assign reg_20 = (fsm_out[8] ? reg_20_0 : 8'h0) |
+						 (fsm_out[7] ? reg_20_1 : 8'h0) |
+						 (fsm_out[12] ? reg_20_2 : 8'h0);
 	
-	assign reg_30 = (fsm_sel[8] ? reg_30_0 : 8'h0) |
-						 (fsm_sel[7] ? reg_30_1 : 8'h0) |
-						 (fsm_sel[12] ? reg_30_2 : 8'h0);
+	assign reg_30 = (fsm_out[8] ? reg_30_0 : 8'h0) |
+						 (fsm_out[7] ? reg_30_1 : 8'h0) |
+						 (fsm_out[12] ? reg_30_2 : 8'h0);
 	
 	assign fnum = { reg_20[0], reg_10 };
 	
@@ -547,7 +601,9 @@ module ym2413
 	ymn_dlatch l_vibrato(.MCLK(MCLK), .en(clk2), .inp(vibrato), .val(vibrato_l));
 	ymn_dlatch #(.DATA_WIDTH(4)) l_multi(.MCLK(MCLK), .en(clk2), .inp(multi), .val(multi_l));
 	
+	//
 	// phase gen
+	//
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_fnum(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fnum), .val(fnum_l));
 	ymn_sr_bit_array #(.DATA_WIDTH(3)) l_blk(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(blk), .val(blk_l));
@@ -639,6 +695,165 @@ module ym2413
 	ymn_sr_bit #(.SR_LENGTH(15)) l_phase_reset(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(phase_reset), .val(phase_reset_l));
 	
 	assign phase_reset2 = modcar_sel_rhy ? phase_reset_l : phase_reset;
+	
+	// rhythm
+	
+	assign rh_sel_hh = rhythm & fsm_out[5];
+	assign rh_sel_sd = rhythm & fsm_out[4];
+	assign rh_sel_tc = rhythm & fsm_out[10];
+	
+	ymn_dlatch l_rh_sel_tc(.MCLK(MCLK), .en(clk1), .inp(rh_sel_tc), .val(rh_sel_tc_l));
+	ymn_dlatch l_rh_sel_hh(.MCLK(MCLK), .en(clk1), .inp(fsm_out[5]), .val(rh_sel_hh_l));
+	
+	always @(posedge MCLK)
+	begin
+		if (fsm_out[5] & ~rh_sel_hh_l)
+		begin
+			rh_hh_bit2 = phase_mem[11];
+			rh_hh_bit3 = phase_mem[12];
+			rh_hh_bit7 = phase_mem[16];
+			rh_hh_bit8 = phase_mem[17];
+		end
+		if (fsm_out[5] & ~rh_sel_hh_l)
+		begin
+			rh_tc_bit3 = phase_mem[12];
+			rh_tc_bit5 = phase_mem[14];
+		end
+	end
+	
+	assign rm_bit = (rm_hh_bit2 ^ rm_hh_bit7) | (rm_tc_bit5 ^ rm_hh_bit3) | (rm_tc_bit5 ^ rm_tc_bit3);
+	
+	assign rm_hh_val = rm_bit ^ rm_noise;
+	
+	assign rm_noise = noise_lfsr[0];
+	
+	assign pg_out =
+		(rh_sel_hh ? { rm_bit, 1'h0, rm_hh_val, rm_hh_val, 1'h0, rm_hh_val | ~rm_hh_val, ~rm_hh_val, 1'h0, ~rm_hh_val, 2'h0 } : 10'h0) |
+		(rh_sel_sd ? { rm_hh_bit8, rm_hh_bit8 ^ rm_noise, 8'h0 } : 10'h0 ) |
+		(rh_sel_tc ? { rm_bit, 9'h100 } : 10'h0) |
+		(~(rh_sel_hh | rh_sel_sd | rh_sel_tc) ? phase_mem[18:9] : 10'h0);
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(23)) l_noise_lfsr(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp({noise_lfsr == 23'h0 | (noise_lfsr[0] ^ noise_lfsr[14]) | test1, noise_lfsr[22:1]}), .val(noise_lfsr));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_pg_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp({ env_dbg[6], pg_dbg[9:1] } | (fsm_out[11] ? phase_mem[9:0] : 9'h0)), .val(pg_dbg));
+	
+	ymn_
+	
+	//
+	// env gen
+	//
+	
+	// tremolo
+	
+	ymn_dlatch l_trem_sync(.MCLK(MCLK), .en(clk1), .inp(fsm_out[10]), .val(trem_sync_l));
+	
+	ymn_dlatch l_trem_clk(.MCLK(MCLK), .en(fsm_out[10] & ~trem_sync_l), .inp(vib_c_out[5]), .val(trem_clk));
+	
+	cnt_bit _trem_dir(.MCLK(MCLK), .c1(clk1), .c2(clk2), .c_in(trem_clk & trem_of), .reset(reset | test1), .val(trem_dir));
+	
+	ymn_sr_bit l_trem_car(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(trem_sum[1]), .val(trem_car));
+	
+	ymn_sr_bit_array l_trem_val(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp({ (reset | test1) ? 1'h0 : trem_sum[0], trem_val[8:1] }), .val(trem_val));
+	
+	assign trem_of = (trem_val[6:0] == 7'h0 & fsm_out[11] & trem_dir) | ((trem_val[6:0] & 7'd105) == 7'd105 & fsm_out[11] & ~trem_dir);
+	
+	assign trem_sum = { 1'h0, trem_val[0] } + { 1'h0, trem_car & fsm_out[9] } + { 1'h0, (trem_sync_l | test3) & (trem_dir | fsm_out[11]) & fsm_out[9] };
+	
+	ymn_dlatch l_trem_load(.MCLK(MCLK), .en(clk1), .inp(fsm_out[11]), .val(trem_load_l));
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_trem_out(.MCLK(MCLK), .en(fsm_out[11] & ~trem_load_l), .inp(trem_val[6:3]), .val(trem_out));
+	
+	always @(*)
+	begin
+		case (fnum[8:5])
+			4'h0: ksl_table <= 8'd0;
+			4'h1: ksl_table <= 8'd32;
+			4'h2: ksl_table <= 8'd40;
+			4'h3: ksl_table <= 8'd45;
+			4'h4: ksl_table <= 8'd48;
+			4'h5: ksl_table <= 8'd51;
+			4'h6: ksl_table <= 8'd53;
+			4'h7: ksl_table <= 8'd55;
+			4'h8: ksl_table <= 8'd56;
+			4'h9: ksl_table <= 8'd58;
+			4'ha: ksl_table <= 8'd59;
+			4'hb: ksl_table <= 8'd60;
+			4'hc: ksl_table <= 8'd61;
+			4'hd: ksl_table <= 8'd62;
+			4'he: ksl_table <= 8'd63;
+			4'hf: ksl_table <= 8'd64;
+		endcase
+	end
+	
+	assign ksl_block_add = { 1'h0, ksl_table[5:3] } + { 1'h0, blk };
+	
+	assign ksl_block = (ksl_block_add[3] | ksl_table[6]) ? { ksl_block_add[2:0], ksl_table[2:0] } : 6'h0;
+	
+	ymn_dlatch #(.DATA_WIDTH(6)) l_ksl_block(.MCLK(MCLK), .en(clk1), .inp(ksl_block), .val(ksl_block_l));
+	
+	assign ksl_shift = (ksl == 2'h1 ? { 2'h0, ksl_block_l[5:1] } : 6'h0) |
+							 (ksl == 2'h2 ? { 1'h0, ksl_block_l } : 6'h0) |
+							 (ksl == 2'h3 ? { ksl_block_l, 1'h0 } : 6'h0);
+	
+	assign ksl_tl = { 1'h0, tl, 1'h0 } + { 1'h0, ksl_shift };
+	
+	ymn_dlatch l_tremolo(.MCLK(MCLK), .en(clk2), .inp(tremolo), .val(tremolo_l));
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l_ksl_tl(.MCLK(MCLK), .en(clk2), .inp(ksl_tl), .val(ksl_tl_l));
+	
+	assign ksl_tl_trem = { 1'h0, ksl_tl_l[6:0] } + { 4'h0, tremolo_l ? trem_out : 4'h0 };
+	
+	assign ksl_tl_trem_of = ksl_tl_trm[7] | ksl_tl[7];
+	
+	
+	// eg counter
+	
+	assign eg_timer_sum = { 1'h0, eg_timer_2[0] } + { 1'h0, (eg_timer_carry | eg_timer_sync) & eg_subcnt_sel1 };
+	
+	ymn_sr_bit l_eg_timer_sync(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[10]), .val(eg_timer_sync));
+	
+	ymn_sr_bit l_eg_timer_carry(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_timer_sum[1]), .val(eg_timer_carry));
+	
+	ymn_dlatch l_eg_timer_rst0(.MCLK(MCLK), .en(clk1), .inp(reset), .val(eg_timer_rst0));
+	ymn_dlatch l_eg_timer_rst1(.MCLK(MCLK), .en(clk2), .inp(eg_timer_rst0), .val(eg_timer_rst1));
+	
+	ymn_dlatch l_eg_timer_bit0(.MCLK(MCLK), .en(clk1), .inp(eg_timer_sum[0]), .val(eg_timer_bit0));
+	ymn_dlatch l_eg_timer_bit1(.MCLK(MCLK), .en(clk2), .inp(eg_timer_bit0 & ~eg_timer_rst0), .val(eg_timer_bit1));
+	
+	assign eg_timer_bit = test3 ? data_reg[2] : eg_timer_bit1;
+	
+	ymn_sr_bit l_eg_timer_mask(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp((eg_timer_mask & ~eg_timer_bit) | eg_timer_rst1 | eg_timer_sync), .val(eg_timer_mask));
+	
+	cnt_bit_2 eg_subcnt0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .c_in(fsm_out[10]), .reset(reset), .val(eg_subcnt[0]), .c_out(eg_subcnt_c));
+	cnt_bit_2 eg_subcnt1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .c_in(eg_subcnt_c), .reset(reset), .val(eg_subcnt[1]));
+	
+	assign eg_subcnt_sel1 = eg_subcnt == 2'h0;
+	assign eg_subcnt_sel2 = ~eg_subcnt[0];
+	
+	ymn_sr_bit l_eg_subcnt_sel1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_subcnt_sel1), .val(eg_subcnt_sel1_l));
+	ymn_sr_bit l_eg_subcnt_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_subcnt_sel2), .val(eg_subcnt_sel2_l));
+	
+	assign eg_timer_load = eg_subcnt_sel2 & eg_timer_sync;
+	
+	ymn_dlatch l_eg_timer_load(.MCLK(MCLK), .en(clk1), .inp(eg_timer_load), .val(eg_timer_load_l));
+	
+	assign eg_timer_load2 = eg_timer_load & eg_timer_load_l;
+	
+	ymn_dlatch #(.DATA_WIDTH(18)) l_eg_timer_1(.MCLK(MCLK), .en(clk1), .inp({ eg_timer_bit, eg_timer_2 }), .val(eg_timer_1));
+	ymn_dlatch #(.DATA_WIDTH(17)) l_eg_timer_2(.MCLK(MCLK), .en(clk2), .inp(eg_timer_2[17:1]), .val(eg_timer_2));
+	
+	ymn_dlatch #(.DATA_WIDTH(18)) l_eg_timer_masked_1(.MCLK(MCLK), .en(clk1), .inp({ eg_timer_bit & eg_timer_mask, eg_masked_timer_2 }), .val(eg_timer_masked_1));
+	ymn_dlatch #(.DATA_WIDTH(17)) l_eg_timer_masked_2(.MCLK(MCLK), .en(clk2), .inp(eg_masked_timer_2[17:1]), .val(eg_timer_masked_2));
+	
+	ymn_dlatch #(.DATA_WIDTH(2)) l_eg_timer_low(.MCLK(MCLK), .en(eg_timer_load2), .inp(eg_timer_1[1:0]), .val(eg_timer_low));
+	ymn_dlatch #(.DATA_WIDTH(4)) l_eg_timer_shift(.MCLK(MCLK), .en(eg_timer_load2),
+		.inp({ eg_timer_masked_1[7] | eg_timer_masked_1[8] | eg_timer_masked_1[9] | eg_timer_masked_1[10] | eg_timer_masked_1[11] | eg_timer_masked_1[12],
+			eg_timer_masked_1[3] | eg_timer_masked_1[4] | eg_timer_masked_1[5] | eg_timer_masked_1[6] | eg_timer_masked_1[11] | eg_timer_masked_1[12],
+			eg_timer_masked_1[1] | eg_timer_masked_1[2] | eg_timer_masked_1[5] | eg_timer_masked_1[6] | eg_timer_masked_1[9] | eg_timer_masked_1[10],
+			eg_timer_masked_1[0] | eg_timer_masked_1[2] | eg_timer_masked_1[4] | eg_timer_masked_1[6] | eg_timer_masked_1[8] | eg_timer_masked_1[10] | eg_timer_masked_1[12]}),
+		.val(eg_timer_shift));
 	
 endmodule
 
