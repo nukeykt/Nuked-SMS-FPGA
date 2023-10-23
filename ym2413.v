@@ -64,31 +64,31 @@ module ym2413
 	wire rclk2;
 	wire [9:0] reg_addr_decoder;
 	wire [9:0] reg_addr_write;
-	wire [7:0] regs_0_v, regs_0_oe;
-	wire [7:0] regs_1_v, regs_1_oe;
-	wire [7:0] regs_2_v, regs_2_oe;
-	wire [1:0] regs_3h_v, regs_3h_oe;
-	wire [4:0] regs_3l_v, regs_3l_oe;
-	wire [7:0] regs_4_v, regs_4_oe;
-	wire [7:0] regs_5_v, regs_5_oe;
-	wire [7:0] regs_6_v, regs_6_oe;
-	wire [7:0] regs_7_v, regs_7_oe;
+	wire [7:0] regs_0_v;
+	wire [7:0] regs_1_v;
+	wire [7:0] regs_2_v;
+	wire [1:0] regs_3h_v;
+	wire [4:0] regs_3l_v;
+	wire [7:0] regs_4_v;
+	wire [7:0] regs_5_v;
+	wire [7:0] regs_6_v;
+	wire [7:0] regs_7_v;
 	wire [5:0] regs_e_v;
 	wire [3:0] regs_f_v;
-	wire [4:0] multi;
-	wire ksr;
-	wire sustain;
-	wire vibrato;
-	wire tremolo;
-	wire [5:0] tl;
-	wire [1:0] ksl;
-	wire [2:0] feedback;
-	wire wf_mod;
-	wire wf_car;
-	wire [3:0] decay;
-	wire [3:0] attack;
-	wire [3:0] release_rate;
-	wire [3:0] sustain_level;
+	reg [4:0] multi;
+	reg ksr;
+	reg egtype;
+	reg vibrato;
+	reg tremolo;
+	reg [5:0] tl;
+	reg [1:0] ksl;
+	reg [2:0] feedback;
+	reg wf_mod;
+	reg wf_car;
+	reg [3:0] decay;
+	reg [3:0] attack;
+	reg [3:0] release_rate;
+	reg [3:0] sustain_level;
 	wire rhythm;
 	wire bass_drum;
 	wire snare_drum;
@@ -137,6 +137,33 @@ module ym2413
 	wire [8:0] fnum;
 	wire [2:0] blk;
 	wire sus_on;
+	wire [3:0] ch_vol, ch_volr;
+	wire [8:0] fnum_l;
+	wire [2:0] blk_l;
+	wire [11:0] vib_c_out;
+	wire [2:0] vib_cnt;
+	wire vib_sh0;
+	wire vib_sh1;
+	wire vib_sgn;
+	wire [9:0] vib_add;
+	wire [10:0] vib_sum;
+	wire [10:0] fnum_vib;
+	wire vibrato_l;
+	wire [13:0] fnum_sh0;
+	wire [16:0] fnum_blk;
+	wire [3:0] multi_l;
+	wire [9:0] multi_ctrl;
+	wire [12:0] multi_sel;
+	wire [16:0] fnum_m1;
+	wire [18:0] fnum_m2;
+	wire [18:0] fnum_multi;
+	wire [18:0] freq;
+	wire [18:0] phase_mem;
+	wire [18:0] phase_l;
+	wire phase_reset2;
+	wire phase_reset;
+	wire phase_reset_l;
+	wire modcar_sel_rhy;
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l_ic_latch(.MCLK(MCLK), .c1(mclk1), .c2(mclk2), .inp(reset), .val(ic_latch));
 	
@@ -251,6 +278,8 @@ module ym2413
 	assign rclk1 = rclk & clk1;
 	assign rclk2 = rclk_latch & clk2;
 	
+	ymn_sr_bit l_modcar_sel_rhy(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[1]), .val(modcar_sel_rhy));
+	
 	
 	assign reg_addr_decoder[0] = data_reg == 8'h0;
 	assign reg_addr_decoder[1] = data_reg == 8'h1;
@@ -274,15 +303,15 @@ module ym2413
 	reg_handler rh8(.MCLK(MCLK), .sel(reg_addr_decoder[8]), .write0(write0), .write1(write1), .c1(clk1), .c2(clk2), .val(reg_addr_write[8]));
 	reg_handler rh9(.MCLK(MCLK), .sel(reg_addr_decoder[9]), .write0(write0), .write1(write1), .c1(clk1), .c2(clk2), .val(reg_addr_write[9]));
 	
-	reg_bit2 #(.DATA_WIDTH(8)) regs_0(.MCLK(MCLK), .en(reg_addr_write[0]), .inp(data_reg), .rst(reset), .oe(mod_sel_custom), .val(regs_0_v), .v_oe(regs_0_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_1(.MCLK(MCLK), .en(reg_addr_write[1]), .inp(data_reg), .rst(reset), .oe(car_sel_custom), .val(regs_1_v), .v_oe(regs_1_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_2(.MCLK(MCLK), .en(reg_addr_write[2]), .inp(data_reg), .rst(reset), .oe(mod_sel_custom), .val(regs_2_v), .v_oe(regs_2_oe));
-	reg_bit2 #(.DATA_WIDTH(2)) regs_3h(.MCLK(MCLK), .en(reg_addr_write[3]), .inp(data_reg[7:6]), .rst(reset), .oe(car_sel_custom), .val(regs_3h_v), .v_oe(regs_3h_oe));
-	reg_bit2 #(.DATA_WIDTH(5)) regs_3l(.MCLK(MCLK), .en(reg_addr_write[3]), .inp(data_reg[4:0]), .rst(reset), .oe(inst_cust_l), .val(regs_3l_v), .v_oe(regs_3l_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_4(.MCLK(MCLK), .en(reg_addr_write[4]), .inp(data_reg), .rst(reset), .oe(mod_sel_custom), .val(regs_4_v), .v_oe(regs_4_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_5(.MCLK(MCLK), .en(reg_addr_write[5]), .inp(data_reg), .rst(reset), .oe(car_sel_custom), .val(regs_5_v), .v_oe(regs_5_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_6(.MCLK(MCLK), .en(reg_addr_write[6]), .inp(data_reg), .rst(reset), .oe(mod_sel_custom), .val(regs_6_v), .v_oe(regs_6_oe));
-	reg_bit2 #(.DATA_WIDTH(8)) regs_7(.MCLK(MCLK), .en(reg_addr_write[7]), .inp(data_reg), .rst(reset), .oe(car_sel_custom), .val(regs_7_v), .v_oe(regs_7_oe));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_0(.MCLK(MCLK), .en(reg_addr_write[0]), .inp(data_reg), .rst(reset), .val(regs_0_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_1(.MCLK(MCLK), .en(reg_addr_write[1]), .inp(data_reg), .rst(reset), .val(regs_1_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_2(.MCLK(MCLK), .en(reg_addr_write[2]), .inp(data_reg), .rst(reset), .val(regs_2_v));
+	reg_bit2 #(.DATA_WIDTH(2)) regs_3h(.MCLK(MCLK), .en(reg_addr_write[3]), .inp(data_reg[7:6]), .rst(reset), .val(regs_3h_v));
+	reg_bit2 #(.DATA_WIDTH(5)) regs_3l(.MCLK(MCLK), .en(reg_addr_write[3]), .inp(data_reg[4:0]), .rst(reset), .val(regs_3l_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_4(.MCLK(MCLK), .en(reg_addr_write[4]), .inp(data_reg), .rst(reset), .val(regs_4_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_5(.MCLK(MCLK), .en(reg_addr_write[5]), .inp(data_reg), .rst(reset), .val(regs_5_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_6(.MCLK(MCLK), .en(reg_addr_write[6]), .inp(data_reg), .rst(reset), .val(regs_6_v));
+	reg_bit2 #(.DATA_WIDTH(8)) regs_7(.MCLK(MCLK), .en(reg_addr_write[7]), .inp(data_reg), .rst(reset), .val(regs_7_v));
 	
 	ymn_slatch_r2 #(.DATA_WIDTH(6)) regs_e(.MCLK(MCLK), .en(reg_addr_write[8]), inp(data_reg[5:0]), .rst(reset), .val(regs_e_v));
 	ymn_slatch_r2 #(.DATA_WIDTH(4)) regs_f(.MCLK(MCLK), .en(reg_addr_write[9]), inp(data_reg[3:0]), .rst(reset), .val(regs_f_v));
@@ -324,15 +353,15 @@ module ym2413
 	wire [36:0] instr_data_c;
 	reg [36:0] instr_data_l;
 	
-	assign instr_data_m[10:0] = instr_data[10:0];
-	assign instr_data_c[10:0] = instr_data[10:0];
+	assign instr_data_m[36:26] = instr_data[62:52];
+	assign instr_data_c[36:26] = instr_data[62:52];
 	
 	genvar i;
 	generate
 		for (i = 0; i < 26; i++)
 		begin
-			assign instr_data_m[11+i] = instr_data[11+i*2];
-			assign instr_data_c[11+i] = instr_data[12+i*2];
+			assign instr_data_m[i] = instr_data[i*2+1];
+			assign instr_data_c[i] = instr_data[i*2];
 		end
 	endgenerate
 	
@@ -446,6 +475,170 @@ module ym2413
 	
 	assign instr = reg_30[7:4];
 	
+	ymn_dlatch #(.DATA_WIDTH(8)) l_ch_vol(.MCLK(MCLK), .en(clk1), .inp(reg_30[3:0]), .val(ch_vol));
+	ymn_dlatch #(.DATA_WIDTH(8)) l_ch_volr(.MCLK(MCLK), .en(clk1), .inp(reg_30[7:4]), .val(ch_volr));
+	
+	always @(posedge MCLK)
+	begin
+		// mux operator parameters
+		if (mod_sel_custom)
+		begin
+			multi <= regs_0_v[3:0];
+			ksr <= regs_0_v[4];
+			egtype <= regs_0_v[5];
+			vibrato <= regs_0_v[6];
+			tremolo <= regs_0_v[7];
+			ksl <= regs_2_v[7:6];
+			attack_rate <= regs_4_v[7:4];
+			decay_rate <= regs_4_v[3:0];
+			sustain_level <= regs_6_v[7:4];
+			release_rate <= regs_6_v[3:0];
+		end
+		else if (car_sel_custom)
+		begin
+			multi <= regs_1_v[3:0];
+			ksr <= regs_1_v[4];
+			egtype <= regs_1_v[5];
+			vibrato <= regs_1_v[6];
+			tremolo <= regs_1_v[7];
+			ksl <= regs_3h_v;
+			attack_rate <= regs_5_v[7:4];
+			decay_rate <= regs_5_v[3:0];
+			sustain_level <= regs_7_v[7:4];
+			release_rate <= regs_7_v[3:0];
+		end
+		else // if (sel_rom1)
+		begin
+			multi <= instr_data[21:18];
+			ksr <= instr_data[22];
+			egtype <= instr_data[23];
+			vibrato <= instr_data[24];
+			tremolo <= instr_data[25];
+			ksl <= instr_data[17:16];
+			attack_rate <= instr_data[15:12];
+			decay_rate <= instr_data[11:8];
+			sustain_rate <= instr_data[7:4];
+			release_rate <= instr_data[3:0];
+		end
+		
+		if (mod_sel_custom)
+			tl <= regs_2_v[5:0];
+		else if (~inst_mc_l) // carrier
+			tl <= { ch_vol, 2'h0 };
+		else if (inst_hh_tom_l)
+			tl <= { ch_volr, 2'h0 };
+		else// if (sel_rom2)
+			tl <= instr_data[36:31];
+		
+		if (inst_cust_l)
+		begin
+			feedback <= regs_3l_v[2:0];
+			wf_mod <= regs_3l_v[3];
+			wf_car <= regs_3l_v[4];
+		end
+		else
+		begin
+			feedback <= instr_data[28:26];
+			wf_mod <= instr_data[29];
+			wf_car <= instr_data[30];
+		end
+	end
+	
+	ymn_dlatch l_vibrato(.MCLK(MCLK), .en(clk2), .inp(vibrato), .val(vibrato_l));
+	ymn_dlatch #(.DATA_WIDTH(4)) l_multi(.MCLK(MCLK), .en(clk2), .inp(multi), .val(multi_l));
+	
+	// phase gen
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_fnum(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fnum), .val(fnum_l));
+	ymn_sr_bit_array #(.DATA_WIDTH(3)) l_blk(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(blk), .val(blk_l));
+	
+	// vibrato
+	
+	cnt_bit_2 vib_cnt0(.MCLK(MCLK), .c_in(fsm_out[10]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[0]));
+	cnt_bit_2 vib_cnt1(.MCLK(MCLK), .c_in(vib_c_out[0]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[1]));
+	cnt_bit_2 vib_cnt2(.MCLK(MCLK), .c_in(vib_c_out[1]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[2]));
+	cnt_bit_2 vib_cnt3(.MCLK(MCLK), .c_in(vib_c_out[2]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[3]));
+	cnt_bit_2 vib_cnt4(.MCLK(MCLK), .c_in(vib_c_out[3]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[4]));
+	cnt_bit_2 vib_cnt5(.MCLK(MCLK), .c_in(vib_c_out[4]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[5]));
+	cnt_bit_2 vib_cnt6(.MCLK(MCLK), .c_in(vib_c_out[5]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[6]));
+	cnt_bit_2 vib_cnt7(.MCLK(MCLK), .c_in(vib_c_out[6]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[7]));
+	cnt_bit_2 vib_cnt8(.MCLK(MCLK), .c_in(vib_c_out[7]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[8]));
+	cnt_bit_2 vib_cnt9(.MCLK(MCLK), .c_in(vib_c_out[8]), .reset(test1), .c1(clk1), .c2(clk2), .c_out(vib_c_out[9]));
+	
+	cnt_bit_2 vib_cnt10(.MCLK(MCLK), .c_in(vib_c_out[9] | (test3 & fsm_out[10])), .reset(test1), .c1(clk1), .c2(clk2), .val(vib_cnt[0]), .c_out(vib_c_out[10]));
+	cnt_bit_2 vib_cnt11(.MCLK(MCLK), .c_in(vib_c_out[10]), .reset(test1), .c1(clk1), .c2(clk2), .val(vib_cnt[1]), .c_out(vib_c_out[11]));
+	cnt_bit_2 vib_cnt12(.MCLK(MCLK), .c_in(vib_c_out[11]), .reset(test1), .c1(clk1), .c2(clk2), .val(vib_cnt[2]));
+	
+	assign vib_sh0 = vibrato_l & ~vib_cnt[0];
+	assign vib_sh1 = vibrato_l & vib_cnt[1:0] == 2'h1;
+	assign vib_sgn = vibrato_l & ~vib_cnt[2];
+	
+	assign vib_add = { {7{vib_sgn}}, ((vib_sh0 ? { 1'h0, fnum_l[8:7] } : 3'h0) | (vib_sh1 ? fnum_l[8:6] : 3'h0)) ^ {3{vib_sgn}}};
+	
+	assign vib_sum = { 1'h0, fnum_l, 1'h0 } + { 1'h0, vib_add };
+	
+	assign fnum_vib[9:0] = vib_sum[9:0];
+	assign fnum_vib[10] = vib_sum[10] & ~vib_sgn;
+	
+	// apply block
+	
+	assign fnum_sh0 = (blk_l[1:0] == 2'h0 ? { 3'h0, fnum_vib } : 14'h0) |
+							(blk_l[1:0] == 2'h1 ? { 2'h0, fnum_vib, 1'h0 } : 14'h0) |
+							(blk_l[1:0] == 2'h2 ? { 1'h0, fnum_vib, 2'h0 } : 14'h0) |
+							(blk_l[1:0] == 2'h3 ? { fnum_vib, 3'h0 } : 14'h0);
+	
+	assign fnum_blk = blk_l[2] ? { fnum_sh0, 3'h0 } : { 4'h0, fnum_sh[13:1] };
+	
+	// multi
+	
+	assign multi_sel[0] = multi_l == 4'h0;
+	assign multi_sel[1] = multi_l == 4'h1;
+	assign multi_sel[2] = multi_l == 4'h2;
+	assign multi_sel[3] = multi_l == 4'h3;
+	assign multi_sel[4] = multi_l == 4'h4;
+	assign multi_sel[5] = multi_l == 4'h5;
+	assign multi_sel[6] = multi_l == 4'h6;
+	assign multi_sel[7] = multi_l == 4'h7;
+	assign multi_sel[8] = multi_l == 4'h8;
+	assign multi_sel[9] = multi_l == 4'h9;
+	assign multi_sel[10] = multi_l[3:1] == 3'h5;
+	assign multi_sel[11] = multi_l[3:1] == 3'h6;
+	assign multi_sel[12] = multi_l[3:1] == 3'h7;
+	
+	assign multi_ctrl[0] = multi_sel[4] | multi_sel[8]; // 4, 8
+	assign multi_ctrl[1] = multi_sel[11]; // 12, 13
+	assign multi_ctrl[2] = multi_sel[1] | multi_sel[5] | multi_sel[9]; // 1, 5, 9
+	assign multi_ctrl[3] = multi_sel[2] | multi_sel[6] | multi_sel[10]; // 2, 6, 10, 11
+	assign multi_ctrl[4] = multi_sel[3] | multi_sel[7] | multi_sel[12]; // 3, 7, 14, 15
+	assign multi_ctrl[5] = multi_sel[9]; // 0
+	
+	assign multi_ctrl[6] = multi_sel[0] | multi_sel[1] | multi_sel[2]; // 0, 1, 2
+	assign multi_ctrl[7] = multi_sel[12]; // 14, 15
+	assign multi_ctrl[8] = multi_sel[7] | multi_sel[8] | multi_sel[9] | multi_sel[10] | multi_sel[11];
+	assign multi_ctrl[9] = multi_sel[3] | multi_sel[4] | multi_sel[5] | multi_sel[6];
+	
+	assign fnum_m1 = multi_ctrl[9] ? fnum_blk :
+							(multi_ctrl[8] ? { fnum_block[15:0], 1'h0 } :
+								(multi_ctrl[7] ? { fnum_block[14:0], 2'h0 } : 17'h0));
+	
+	assign fnum_m2 = multi_ctrl[5] ? { 3'h0, fnum_block[16:1] } :
+							(multi_ctrl[4] ? { 2'h3, ~fnum_block } :
+								(multi_ctrl[3] ? { 1'h0, fnum_block, 1'h0 } :
+									(multi_ctrl[2] ? { 2'h0, fnum_block } :
+										(multi_ctrl[1] ? { fnum_block, 2'h0 } : 19'h0))));
+	
+	
+	assign fnum_multi = { fnum_m1, 2'h0 } + fnum_m2 + { 18'h0, multi_ctrl[4] };
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(19)) l_freq(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fnum_multi), .val(freq));
+	ymn_sr_bit_array #(.DATA_WIDTH(19)) l_phase_l(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp((test2 | phase_reset2) ? 19'h0 : phase_mem), .val(phase_l));
+	
+	
+	ymn_sr_bit_array #(.SR_LENGTH(17), .DATA_WIDTH(19)) l_phase_mem(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(freq + phase_l), .val(phase_mem));
+	
+	ymn_sr_bit #(.SR_LENGTH(15)) l_phase_reset(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(phase_reset), .val(phase_reset_l));
+	
+	assign phase_reset2 = modcar_sel_rhy ? phase_reset_l : phase_reset;
 	
 endmodule
 
@@ -474,9 +667,7 @@ module reg_bit2 #(parameter DATA_WIDTH = 1)
 	input en,
 	input [DATA_WIDTH-1:0] inp,
 	input rst,
-	input oe,
-	output [DATA_WIDTH-1:0] val,
-	output [DATA_WIDTH-1:0] v_oe
+	output [DATA_WIDTH-1:0] val
 	);
 	
 	reg [DATA_WIDTH-1:0] mem;
@@ -488,8 +679,6 @@ module reg_bit2 #(parameter DATA_WIDTH = 1)
 	end
 	
 	assign val = mem;
-	
-	assign v_oe = {DATA_WIDTH{oe}} & ~(mem & {DATA_WIDTH{rst}});
 
 endmodule
 
