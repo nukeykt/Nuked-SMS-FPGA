@@ -4,7 +4,8 @@ module ymn_sr_bit #(parameter SR_LENGTH = 1)
 	input c1,
 	input c2,
 	input inp,
-	output val
+	output val,
+	output nval
 	);
 	
 	reg [SR_LENGTH-1:0] v1 = 0;
@@ -14,6 +15,7 @@ module ymn_sr_bit #(parameter SR_LENGTH = 1)
 	
 	//assign sr_out = v2_assign[SR_LENGTH-1];
 	assign val = v2[SR_LENGTH-1];
+	assign nval = ~val;
 	
 	always @(posedge MCLK)
 	begin
