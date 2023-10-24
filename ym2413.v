@@ -287,6 +287,67 @@ module ym2413
 	wire [6:0] eg_level_clamp;
 	wire [6:0] eg_out;
 	wire [6:0] eg_dbg;
+	wire [9:0] op_phase_sum;
+	wire [9:0] op_phase_mod;
+	wire op_sign;
+	wire [7:0] op_phase_quarter;
+	wire [4:0] sin_lut_index;
+	wire [3;0] sin_index_top_sel;
+	reg [45:0] sine_lut_out;
+	wire [18:0] sin_lut_mux;
+	wire [18:0] sin_lut_l;
+	wire sin_index_0_l;
+	wire [10:0] sin_base;
+	wire [7:0] sin_delta;
+	wire [11:0] sin_sum;
+	wire [11:0] sin_sum_l;
+	wire [12:0] op_att_sum;
+	wire [11:0] op_att_clamp;
+	wire [3:0] op_shift;
+	wire [7:0] pow_index;
+	wire [4:0] pow_lut_index;
+	reg [47:0] pow_lut_out;
+	wire pow_index_top_sel[3:0];
+	wire [12:0] pow_lut_mux;
+	wire [12:0] pow_lut_l;
+	wire pow_index_0_l;
+	wire [9:0] pow_base;
+	wire [2:0] pow_delta;
+	wire [9:0] pow_sum;
+	wire [9:0] pow_sum_l;
+	wire op_sign2;
+	wire op_mute;
+	reg wf_mod_l;
+	reg wf_car_l;
+	wire op_wf_mod;
+	wire op_wf_car;
+	wire op_shift0;
+	wire op_shift4;
+	wire op_shift8;
+	wire op_shiftc;
+	wire [10:0] pow_shift1;
+	wire [10:0] pow_shift2;
+	wire [11:0] op_value;
+	wire [11:0] op_fb1_mem1, op_fb1_mem2;
+	wire [11:0] op_fb2_mem1, op_fb2_mem2;
+	wire [9:0] op_fm;
+	wire [12:0] op_fb_sum1;
+	wire [11:0] op_fb_sum;
+	wire [6:0] op_fb_sel;
+	wire [2:0] feedback_l;
+	wire op_mod_sel;
+	wire [8:0] op_out;
+	wire [8:0] ch_val;
+	wire [8:0] ch_val_sign;
+	wire [8:0] ch_val_rhy;
+	wire [8:0] ch_val_l;
+	wire ch_en_m;
+	wire ch_en_r;
+	wire [8:0] ch_dbg;
+	wire [8:0] dac_value;
+	wire dac_en_m;
+	wire dac_en_r;
+	
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l_ic_latch(.MCLK(MCLK), .c1(mclk1), .c2(mclk2), .inp(reset), .val(ic_latch));
 	
@@ -1076,6 +1137,294 @@ module ym2413
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(7)) l_eg_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
 		.inp({ eg_dbg[5:0], 1'h0 } | (fsm_out[11] ? eg_out : 7'h0)), .val(eg_dbg));
+	
+	//
+	// operator unit
+	//
+	
+	assign op_phase_sum = pg_out + op_phase_mod;
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l_op_sign(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(op_phase_sum[9]), .val(op_sign));
+	
+	assign op_phase_quarter = op_phase_sum[8] ? ~op_phase_sum[7:0] : op_phase_sum[7:0];
+	
+	assign sin_lut_index = op_phase_quarter[5:1];
+	
+	always @(*)
+	begin
+		case (sin_lut_index)
+			5'h1f: sine_lut_out = 46'b0001100001000100100001000010101010101000100101;
+			5'h1e: sine_lut_out = 46'b0001100001010100001000000001001001001100010100;
+			5'h1d: sine_lut_out = 46'b0001100001010100001000110000101011001100000110;
+			5'h1c: sine_lut_out = 46'b0001110000010000000000110011001001001100100111;
+			5'h1b: sine_lut_out = 46'b0001110000010000011000000011101010001110010110;
+			5'h1a: sine_lut_out = 46'b0001110000010100010001100000001000101110100111;
+			5'h19: sine_lut_out = 46'b0001110000010100011001100001001011001110100101;
+			5'h18: sine_lut_out = 46'b0001110000011100001001010011101000101111001111;
+			5'h17: sine_lut_out = 46'b0001110001011000000001110010101110001101110111;
+			5'h16: sine_lut_out = 46'b0001110001011000101000111001100101011001101010;
+			5'h15: sine_lut_out = 46'b0001110001011100110000011011100100001010100111;
+			5'h14: sine_lut_out = 46'b0001110001011100111000111110100011001001110111;
+			5'h13: sine_lut_out = 46'b0100100010010000100001011100100000111001111011;
+			5'h12: sine_lut_out = 46'b0100100010010100100001001111000001111110100010;
+			5'h11: sine_lut_out = 46'b0100100010010100101001101111110110100101100100;
+			5'h10: sine_lut_out = 46'b0100100111000000010000011101000110101110010111;
+			5'h0f: sine_lut_out = 46'b0100100111000100010000101110001101001011111110;
+			5'h0e: sine_lut_out = 46'b0100100111001100001011011000001001011000011011;
+			5'h0d: sine_lut_out = 46'b0100110110001000001011101000001010111011111011;
+			5'h0c: sine_lut_out = 46'b0100110110001100010011011010111110110100011000;
+			5'h0b: sine_lut_out = 46'b0100110111001000110010111100101010001100010111;
+			5'h0a: sine_lut_out = 46'b0100110111001100110110110111110001010111110000;
+			5'h09: sine_lut_out = 46'b0111000100000000101111000101010101010101111001;
+			5'h08: sine_lut_out = 46'b0111000100000100101111110111011101010010111011;
+			5'h07: sine_lut_out = 46'b0111000101010101010100101000110000010010010001;
+			5'h06: sine_lut_out = 46'b0111010100011001001100011010011100010000101001;
+			5'h05: sine_lut_out = 46'b0111010101011011001001100100010000110100110010;
+			5'h04: sine_lut_out = 46'b1010000100011011011001011110010001110010101001;
+			5'h03: sine_lut_out = 46'b1010000101011111111100100101011100010010010011;
+			5'h02: sine_lut_out = 46'b1010010111110101100010001011110001010100001010;
+			5'h01: sine_lut_out = 46'b1011010110110011110111011000011100110000011010;
+			5'h00: sine_lut_out = 46'b1110011111010001110111100110011001110101111010;
+		endcase
+	end
+	
+	assign sin_index_top_sel[0] = op_phase_quarter[7:6] == 2'h0;
+	assign sin_index_top_sel[1] = op_phase_quarter[7:6] == 2'h1;
+	assign sin_index_top_sel[2] = op_phase_quarter[7:6] == 2'h2;
+	assign sin_index_top_sel[3] = op_phase_quarter[7:6] == 2'h3;
+	
+	assign sin_lut_mux[0] = (sine_lut_out[0] & sin_index_top_sel[0]) | (sine_lut_out[1] & sin_index_top_sel[1])
+		| (sine_lut_out[2] & sin_index_top_sel[2]) | (sine_lut_out[3] & sin_index_top_sel[3]);
+	assign sin_lut_mux[1] = (sine_lut_out[4] & sin_index_top_sel[0]) | (sine_lut_out[5] & sin_index_top_sel[1])
+		| (sine_lut_out[6] & sin_index_top_sel[2]) | (sine_lut_out[7] & sin_index_top_sel[3]);
+	assign sin_lut_mux[2] = (sine_lut_out[8] & sin_index_top_sel[0]) | (sine_lut_out[9] & sin_index_top_sel[1])
+		| (sine_lut_out[10] & sin_index_top_sel[2]);
+	assign sin_lut_mux[3] = (sine_lut_out[11] & sin_index_top_sel[0]) | (sine_lut_out[12] & sin_index_top_sel[1])
+		| (sine_lut_out[13] & sin_index_top_sel[2]) | (sine_lut_out[14] & sin_index_top_sel[3]);
+	assign sin_lut_mux[4] = (sine_lut_out[15] & sin_index_top_sel[0]) | (sine_lut_out[16] & sin_index_top_sel[1]);
+	assign sin_lut_mux[5] = (sine_lut_out[17] & sin_index_top_sel[0]) | (sine_lut_out[18] & sin_index_top_sel[1])
+		| (sine_lut_out[19] & sin_index_top_sel[2]) | (sine_lut_out[20] & sin_index_top_sel[3]);
+	assign sin_lut_mux[6] = sine_lut_out[21] & sin_index_top_sel[0];
+	assign sin_lut_mux[7] = (sine_lut_out[22] & sin_index_top_sel[0]) | (sine_lut_out[23] & sin_index_top_sel[1])
+		| (sine_lut_out[24] & sin_index_top_sel[2]) | (sine_lut_out[25] & sin_index_top_sel[3]);
+	assign sin_lut_mux[8] = sine_lut_out[26] & sin_index_top_sel[0];
+	assign sin_lut_mux[9] = (sine_lut_out[27] & sin_index_top_sel[0]) | (sine_lut_out[28] & sin_index_top_sel[1])
+		| (sine_lut_out[29] & sin_index_top_sel[2]) | (sine_lut_out[30] & sin_index_top_sel[3]);
+	assign sin_lut_mux[10] = sine_lut_out[31] & sin_index_top_sel[0];
+	assign sin_lut_mux[11] = (sine_lut_out[32] & sin_index_top_sel[0]) | (sine_lut_out[33] & sin_index_top_sel[1])
+		| (sine_lut_out[34] & sin_index_top_sel[2]);
+	assign sin_lut_mux[12] = sine_lut_out[35] & sin_index_top_sel[0];
+	assign sin_lut_mux[13] = (sine_lut_out[36] & sin_index_top_sel[0]) | (sine_lut_out[37] & sin_index_top_sel[1])
+		| (sine_lut_out[38] & sin_index_top_sel[2]);
+	assign sin_lut_mux[14] = sine_lut_out[39] & sin_index_top_sel[0];
+	assign sin_lut_mux[15] = (sine_lut_out[40] & sin_index_top_sel[0]) | (sine_lut_out[41] & sin_index_top_sel[1]);
+	assign sin_lut_mux[16] = (sine_lut_out[42] & sin_index_top_sel[0]) | (sine_lut_out[43] & sin_index_top_sel[1]);
+	assign sin_lut_mux[17] = sine_lut_out[44] & sin_index_top_sel[0];
+	assign sin_lut_mux[18] = sine_lut_out[45] & sin_index_top_sel[0];
+	
+	ymn_dlatch #(.DATA_WIDTH(19)) l_sin_lut(.MCLK(MCLK), .en(clk1), .inp(sin_lut_mux), .val(sin_lut_l));
+	
+	ymn_dlatch l_sin_index_0(.MCLK(MCLK), en(clk1), .inp(op_phase_quarter[0]), .val(sin_index_0_l));
+	
+	assign sin_base = { sin_lut_l[18:15], sin_lut_l[13], sin_lut_l[11], sin_lut_l[9], sin_lut_l[7], sin_lut_l[5], sin_lut_l[3], sin_lut_l[1] };
+	
+	assign sin_delta = sin_index_0_l ? 8'h0 : { sin_lut_l[14], sin_lut_l[12], sin_lut_l[10], sin_lut_l[8], sin_lut_l[6], sin_lut_l[4], sin_lut_l[2], sin_lut_l[0] };
+	
+	assign sin_sum = { 1'h0, sin_base } + { 3'h0, sin_delta[7], sin_delta };
+	
+	ymn_dlatch #(.DATA_WIDTH(12)) l_sin_sum(.MCLK(MCLK), .en(clk2), .inp(sin_sum), .val(sin_sum_l));
+	
+	assign op_att_sum = { 1'h0, sin_sum_l } + { 1'h0, eg_out, 4'h0 };
+	
+	assign op_att_clamp = ~(op_att_sum[12] ? 12'hfff : op_att_clamp[11:0]);
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(4)) l_op_shift(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(op_att_clamp[11:8]), .val(op_shift));
+	
+	assign pow_index = op_att_clamp[7:0];
+	
+	assign pow_lut_index = pow_index[5:1];
+	
+	always @(*)
+	begin
+		case (pow_lut_index)
+			5'h1f: pow_lut_out = 48'b111011111100011111101000111101000001000110011101;
+			5'h1e: pow_lut_out = 48'b111011111100011010011111011000001011100010110011;
+			5'h1d: pow_lut_out = 48'b111011111100000011110110111101101001110111011010;
+			5'h1c: pow_lut_out = 48'b111011111100000011100001111101100101000001010110;
+			5'h1b: pow_lut_out = 48'b111011111100000010000110011100100101000001011011;
+			5'h1a: pow_lut_out = 48'b111011101001010101011101111101000001111111011101;
+			5'h19: pow_lut_out = 48'b111011001011011101111010011111001000011011000000;
+			5'h18: pow_lut_out = 48'b111011001011011100100101111100001001001111011110;
+			5'h17: pow_lut_out = 48'b111011001011001101000110111101000001101011011010;
+			5'h16: pow_lut_out = 48'b111011001011000001110011011101110001010111010100;
+			5'h15: pow_lut_out = 48'b111011000011100010111100111100110001110110010101;
+			5'h14: pow_lut_out = 48'b111010000111110011001111011101111001110010011011;
+			5'h13: pow_lut_out = 48'b111010000111110011000000111001111011001110111101;
+			5'h12: pow_lut_out = 48'b111010000100111110110111111100110101101001010001;
+			5'h11: pow_lut_out = 48'b111010000100111110110000011100110001001110010011;
+			5'h10: pow_lut_out = 48'b111010000100101101011010111101001001110011010101;
+			5'h0f: pow_lut_out = 48'b111010000100101100001101011001001011010110110111;
+			5'h0e: pow_lut_out = 48'b111010000100100100101010011000000011111010110001;
+			5'h0d: pow_lut_out = 48'b111010000000110001110101111000000011011110110011;
+			5'h0c: pow_lut_out = 48'b111010000000110000010110011001011011100011110101;
+			5'h0b: pow_lut_out = 48'b111010000000010010001001111101011001000110010101;
+			5'h0a: pow_lut_out = 48'b101110100010001011101110111000010011101010110101;
+			5'h09: pow_lut_out = 48'b101100110011001111111001011000010011001111110011;
+			5'h08: pow_lut_out = 48'b101100110011001110010011111001001011100010110001;
+			5'h07: pow_lut_out = 48'b100101110111011111010100111001000011000010101010;
+			5'h06: pow_lut_out = 48'b100101110111010111100011011000000011101110111000;
+			5'h05: pow_lut_out = 48'b100101110111010100101100111100001001001010011010;
+			5'h04: pow_lut_out = 48'b100101110111010000011011011100011001000110010000;
+			5'h03: pow_lut_out = 48'b100101110111000001011000011001010011101010110001;
+			5'h02: pow_lut_out = 48'b100101110101001000100111111001010011001110111011;
+			5'h01: pow_lut_out = 48'b100101110101001000100001011101001001000100000000;
+			5'h00: pow_lut_out = 48'b100101110001011001000110011000000011101010110000;
+		endcase
+	end
+	
+	assign pow_index_top_sel[0] = pow_index[7:6] == 2'h0;
+	assign pow_index_top_sel[1] = pow_index[7:6] == 2'h1;
+	assign pow_index_top_sel[2] = pow_index[7:6] == 2'h2;
+	assign pow_index_top_sel[3] = pow_index[7:6] == 2'h3;
+	
+	assign pow_lut_mux[0] = (pow_lut_out[0] & pow_index_top_sel[0]) | (pow_lut_out[1] & pow_index_top_sel[1])
+		| (pow_lut_out[2] & pow_index_top_sel[2]) | (pow_lut_out[3] & pow_index_top_sel[3]);
+	assign pow_lut_mux[1] = (pow_lut_out[4] & pow_index_top_sel[0]) | (pow_lut_out[5] & pow_index_top_sel[1])
+		| (pow_lut_out[6] & pow_index_top_sel[2]) | (pow_lut_out[7] & pow_index_top_sel[3]);
+	assign pow_lut_mux[2] = (pow_lut_out[8] & pow_index_top_sel[0]) | (pow_lut_out[9] & pow_index_top_sel[1])
+		| (pow_lut_out[10] & pow_index_top_sel[2]) | (pow_lut_out[11] & pow_index_top_sel[3]);
+	assign pow_lut_mux[3] = (pow_lut_out[12] & pow_index_top_sel[0]) | (pow_lut_out[13] & pow_index_top_sel[1])
+		| (pow_lut_out[14] & pow_index_top_sel[3]);
+	assign pow_lut_mux[4] = (pow_lut_out[15] & pow_index_top_sel[0]) | (pow_lut_out[16] & pow_index_top_sel[1])
+		| (pow_lut_out[17] & pow_index_top_sel[2]) | (pow_lut_out[18] & pow_index_top_sel[3]);
+	assign pow_lut_mux[5] = (pow_lut_out[19] & pow_index_top_sel[0]) | (pow_lut_out[20] & pow_index_top_sel[1])
+		| (pow_lut_out[21] & pow_index_top_sel[2]) | (pow_lut_out[22] & pow_index_top_sel[3]);
+	assign pow_lut_mux[6] = (pow_lut_out[23] & pow_index_top_sel[0]) | (pow_lut_out[24] & pow_index_top_sel[1])
+		| (pow_lut_out[25] & pow_index_top_sel[2]) | (pow_lut_out[26] & pow_index_top_sel[3]);
+	assign pow_lut_mux[7] = (pow_lut_out[27] & pow_index_top_sel[0]) | (pow_lut_out[28] & pow_index_top_sel[1])
+		| (pow_lut_out[29] & pow_index_top_sel[2]) | (pow_lut_out[30] & pow_index_top_sel[3]);
+	assign pow_lut_mux[8] = (pow_lut_out[31] & pow_index_top_sel[0]) | (pow_lut_out[32] & pow_index_top_sel[1])
+		| (pow_lut_out[33] & pow_index_top_sel[2]) | (pow_lut_out[34] & pow_index_top_sel[3]);
+	assign pow_lut_mux[9] = (pow_lut_out[35] & pow_index_top_sel[0]) | (pow_lut_out[36] & pow_index_top_sel[1])
+		| (pow_lut_out[37] & pow_index_top_sel[2]) | (pow_lut_out[38] & pow_index_top_sel[3]);
+	assign pow_lut_mux[10] = (pow_lut_out[39] & pow_index_top_sel[0]) | (pow_lut_out[40] & pow_index_top_sel[1])
+		| (pow_lut_out[41] & pow_index_top_sel[2]) | (pow_lut_out[42] & pow_index_top_sel[3]);
+	assign pow_lut_mux[11] = (pow_lut_out[43] & pow_index_top_sel[1])
+		| (pow_lut_out[44] & pow_index_top_sel[2]) | (pow_lut_out[45] & pow_index_top_sel[3]);
+	assign pow_lut_mux[12] = (pow_lut_out[46] & pow_index_top_sel[2]) | (pow_lut_out[47] & pow_index_top_sel[3]);
+	
+	ymn_dlatch #(.DATA_WIDTH(13)) l_pow_lut(.MCLK(MCLK), .en(clk1), .inp(pow_lut_mux), .val(pow_lut_l));
+	
+	ymn_dlatch l_pow_index_0(.MCLK(MCLK), .en(clk1), .inp(pow_index[0]), .val(pow_index_0_l));
+	
+	assign pow_base = { pow_lut_l[12:6], pow_lut_l[4], pow_lut_l[2], pow_lut_l[0] };
+	assign pow_delta = pow_index_0_l ? { pow_lut_l[5], pow_lut_l[3], pow_lut_l[1] } : 3'h0;
+	
+	assign pow_sum = pow_base + { 7'h0, pow_delta };
+	
+	ymn_dlatch #(.DATA_WIDTH(10)) l_pow_sum(.MCLK(MCLK), .en(clk2), .inp(pow_sum), .val(pow_sum_l));
+	
+	assign op_sign2 = ~op_sign | eg_silent;
+	
+	ymn_dlatch l_wf_mod(.MCLK(MLCK), .en(clk2), .inp(wf_mod), .val(wf_mod_l));
+	ymn_dlatch l_wf_car(.MCLK(MLCK), .en(clk2), .inp(wf_car), .val(wf_car_l));
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l_op_wf_mod(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(wf_mod_l), .val(op_wf_mod));
+	ymn_sr_bit #(.SR_LENGTH(2)) l_op_wf_car(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(wf_car_l), .val(op_wf_car));
+	
+	assign op_mute = eg_silent | (fsm_out[2] & op_wf_car & op_sign) | (~fsm_out[2] & op_wf_mod & op_sign);
+	
+	assign op_shift0 = op_shift[3:2] == 2'h0 & ~eg_mute;
+	assign op_shift4 = op_shift[3:2] == 2'h1 & ~eg_mute;
+	assign op_shift8 = op_shift[3:2] == 2'h2 & ~eg_mute;
+	assign op_shiftc = ~(op_shift0 | op_shift4 | op_shift8);
+	
+	assign pow_shift1 = (op_shift[1:0] == 2'h0 ? { 1'h1, pow_sum_l } : 11'h0) |
+							  (op_shift[1:0] == 2'h1 ? { 2'h1, pow_sum_l[9:1] } : 11'h0) |
+							  (op_shift[1:0] == 2'h2 ? { 3'h1, pow_sum_l[9:2] } : 11'h0) |
+							  (op_shift[1:0] == 2'h3 ? { 4'h1, pow_sum_l[9:3] } : 11'h0);
+	
+	assign poW_shift2 = (op_shift0 ? pow_shift1 : 11'h0) |
+							  (op_shift4 ? { 4'h0, pow_shift1[10:4] } : 11'h0) |
+							  (op_shift8 ? { 8'h0, pow_shift1[10:8] } : 11'h0) |
+							  (op_shiftc ? 11'h0 : 11'h0);
+	
+	assign op_value = op_sign2 ? { 1'h0, pow_shift2 } : { 1'h1, ~pow_shift2 };
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(12), .SR_LENGTH(6)) l_op_fb1_mem1(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(fsm_out[2] ? op_value : op_fb1_mem2), .val(op_fb1_mem1));
+	ymn_sr_bit_array #(.DATA_WIDTH(12), .SR_LENGTH(3)) l_op_fb1_mem2(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(op_fb1_mem1), .val(op_fb1_mem2));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(12), .SR_LENGTH(6)) l_op_fb2_mem1(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(fsm_out[2] ? op_fb1_mem2 : op_fb2_mem2), .val(op_fb2_mem1));
+	ymn_sr_bit_array #(.DATA_WIDTH(12), .SR_LENGTH(3)) l_op_fb2_mem2(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(op_fb2_mem1), .val(op_fb2_mem2));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(10)) l_op_fm(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(op_value[9:0]), .val(op_fm));
+	
+	assign op_fb_sum1 = { op_fb1_mem1[11], op_fb1_mem1 } + { op_fb2_mem1[11], op_fb2_mem1 };
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(12)) l_op_fb_sum(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(op_fb_sum1[12:1]), .val(op_fb_sum));
+	
+	ymn_dlatch #(.DATA_WIDTH(3)) l_feedback(.MCLK(MCLK), .en(clk2), .inp(feedback), .val(feedback_l));
+	
+	ymn_sr_bit l_op_mod_sel(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[2]), .val(op_mod_sel));
+	
+	assign op_fb_sel[0] = modcar_sel_rhy & feedback_l == 3'h1;
+	assign op_fb_sel[1] = modcar_sel_rhy & feedback_l == 3'h2;
+	assign op_fb_sel[2] = modcar_sel_rhy & feedback_l == 3'h3;
+	assign op_fb_sel[3] = modcar_sel_rhy & feedback_l == 3'h4;
+	assign op_fb_sel[4] = modcar_sel_rhy & feedback_l == 3'h5;
+	assign op_fb_sel[5] = modcar_sel_rhy & feedback_l == 3'h6;
+	assign op_fb_sel[6] = modcar_sel_rhy & feedback_l == 3'h7;
+	
+	assign op_phase_mod = (op_mod_sel ? op_fm : 10'h0) |
+								 (op_fb_sel[0] ? { {4{op_fb_sum[11}}, op_fb_sum[11:6] } : 10'h0) |
+								 (op_fb_sel[1] ? { {3{op_fb_sum[11}}, op_fb_sum[11:5] } : 10'h0) |
+								 (op_fb_sel[2] ? { {2{op_fb_sum[11}}, op_fb_sum[11:4] } : 10'h0) |
+								 (op_fb_sel[3] ? { {1{op_fb_sum[11}}, op_fb_sum[11:3] } : 10'h0) |
+								 (op_fb_sel[4] ? { op_fb_sum[11:2] } : 10'h0) |
+								 (op_fb_sel[5] ? { op_fb_sum[10:1] } : 10'h0) |
+								 (op_fb_sel[6] ? { op_fb_sum[9:0] } : 10'h0);
+	
+	assign op_out = op_value[11:3];
+	
+	//
+	// channel
+	//
+	
+	assign ch_val = fsm_out[2] ? (rhythm ? ch_val_rhy : 9'h0) : op_out;
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(9), .SR_LENGTH(5)) l_ch_val_rhy(.MCLK(MCLK), .c1(rclk1), .c2(rclk2), .inp(ch_val), .val(ch_val_rhy));
+	
+	assign ch_val_sign[7:0] = ch_val[8] ? ~ch_val[7:0] : ch_val[7:0];
+	assign ch_val_sign[8] = ch_val[8];
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_ch_val(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(ch_val_sign), .val(ch_val_l));
+	
+	ymn_sr_bit l_ch_en_m(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[0]), .val(ch_en_m));
+	ymn_sr_bit l_ch_en_r(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[13]), .val(ch_en_r));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_ch_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(fsm_out[11] ? { ch_dbg[7:0], 1'h0 } : ch_dbg), .val(ch_dbg));
+	
+	assign dac_value = ch_val_l;
+	assign dac_en_m = ch_en_m & dac_clk;
+	assign dac_en_r = ch_en_r & dac_clk;
+	
+	wire DAC_sign = ~dac_value[8];
+	wire [9:0] DAC_matrix_out = DAC_sign ? { 2'h3, ~dac_value[7:0] } : ({ 2'h0, dac_value[7:0] } + 10'h1);
+	wire [9:0] DAC_silent = DAC_sign ? 10'h3ff : 10'h1;
+	
+	assign MO = dac_en_m ? DAC_matrix_out : DAC_silent;
+	assign RO = dac_en_r ? DAC_matrix_out : DAC_silent;
+	
+	assign DATA_o = { ch_dbg[8], pg_dbg[0] };
+	
+	assign DATA_d = ~dbg_read;
 	
 endmodule
 
