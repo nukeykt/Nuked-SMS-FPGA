@@ -218,6 +218,75 @@ module ym2413
 	wire [16:0] eg_timer_masked_1, eg_timer_masked_2;
 	wire [3:0] eg_timer_shift;
 	wire [1:0] eg_timer_low;
+	wire [1:0] rate_state;
+	wire rate_suson;
+	wire [3:0] rate;
+	wire [3:0] ksr_value;
+	wire [3:0] ksr_shift;
+	wire eg_rate_dp;
+	wire eg_rate_rrperc;
+	wire eg_suson;
+	wire eg_keyon_l0;
+	wire eg_release_not_quiet;
+	wire [3:0] eg_rate;
+	wire eg_rate_zero, eg_rate_zero_l;
+	wire [3:0] eg_rate_l;
+	wire [1:0] eg_ksr_low, eg_ksr_low_l;
+	wire [1:0] eg_ksr_hi;
+	wire [4:0] eg_rate_ksr;
+	wire [3:0] eg_rate_ksr_clamp;
+	wire [3:0] eg_rate_clamp_l;
+	wire eg_rate12;
+	wire eg_rate13;
+	wire eg_rate14;
+	wire eg_rate15;
+	wire eg_rate_less12;
+	wire [3:0] eg_shift;
+	wire [3:0] eg_rate_shift;
+	wire eg_inclow;
+	wire eg_rate_less12_l;
+	wire eg_stephi;
+	wire eg_stephi_l;
+	wire eg_rate12_l;
+	wire eg_rate13_l;
+	wire eg_rate14_l;
+	wire eg_rate15_l;
+	wire eg_inc1;
+	wire eg_inc2;
+	wire eg_inc3;
+	wire eg_inc4;
+	wire [1:0] eg_state_mem, eg_state_mem2;
+	wire [1:0] eg_state_next;
+	wire eg_is_release;
+	wire eg_start_attack;
+	wire [1:0] rate_sel;
+	wire eg_state_start;
+	wire eg_state_keyon;
+	wire eg_state_quiet;
+	wire [8:0] eg_state_sel;
+	wire eg_linear;
+	wire eg_exp;
+	wire eg_instantattack;
+	wire eg_reset;
+	wire [6:0] eg_level_mem, eg_level_mem1, eg_level_mem2;
+	wire eg_zeroreach;
+	wire eg_slreach;
+	wire [3:0] sustain_l;
+	wire [3:0] eg_sustain;
+	wire [6:0] eg_add;
+	wire [6:0] eg_add_exp1;
+	wire [6:0] eg_add_exp2;
+	wire [6:0] eg_add_exp3;
+	wire [6:0] eg_add_exp4;
+	wire [6:0] eg_level_next;
+	wire eg_quiet;
+	wire eg_silent;
+	wire [7:0] eg_ksl_tl_trem;
+	wire [6:0] eg_level_l;
+	wire [7:0] eg_level_att;
+	wire [6:0] eg_level_clamp;
+	wire [6:0] eg_out;
+	wire [6:0] eg_dbg;
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l_ic_latch(.MCLK(MCLK), .c1(mclk1), .c2(mclk2), .inp(reset), .val(ic_latch));
 	
@@ -737,7 +806,7 @@ module ym2413
 		.inp({noise_lfsr == 23'h0 | (noise_lfsr[0] ^ noise_lfsr[14]) | test1, noise_lfsr[22:1]}), .val(noise_lfsr));
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_pg_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
-		.inp({ env_dbg[6], pg_dbg[9:1] } | (fsm_out[11] ? phase_mem[9:0] : 9'h0)), .val(pg_dbg));
+		.inp({ eg_dbg[6], pg_dbg[9:1] } | (fsm_out[11] ? phase_mem[9:0] : 9'h0)), .val(pg_dbg));
 	
 	ymn_
 	
@@ -835,7 +904,7 @@ module ym2413
 	ymn_sr_bit l_eg_subcnt_sel1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_subcnt_sel1), .val(eg_subcnt_sel1_l));
 	ymn_sr_bit l_eg_subcnt_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_subcnt_sel2), .val(eg_subcnt_sel2_l));
 	
-	assign eg_timer_load = eg_subcnt_sel2 & eg_timer_sync;
+	assign eg_timer_load = eg_subcnt_sel2_l & eg_timer_sync;
 	
 	ymn_dlatch l_eg_timer_load(.MCLK(MCLK), .en(clk1), .inp(eg_timer_load), .val(eg_timer_load_l));
 	
@@ -854,6 +923,159 @@ module ym2413
 			eg_timer_masked_1[1] | eg_timer_masked_1[2] | eg_timer_masked_1[5] | eg_timer_masked_1[6] | eg_timer_masked_1[9] | eg_timer_masked_1[10],
 			eg_timer_masked_1[0] | eg_timer_masked_1[2] | eg_timer_masked_1[4] | eg_timer_masked_1[6] | eg_timer_masked_1[8] | eg_timer_masked_1[10] | eg_timer_masked_1[12]}),
 		.val(eg_timer_shift));
+	
+	ymn_dlatch #(.DATA_WIDTH(2)) l_rate_state(.MCLK(MCLK), .en(clk1), .inp(rate_sel), .val(rate_state));
+	ymn_dlatch l_rate_suson(.MCLK(MCLK), .en(clk1), .inp(sus_on), .val(rate_suson));
+	
+	assign rate = force_zerorate ? 4'h0 :
+						((rate_state == 2'h0 ? attack_rate : 4'h0) |
+						(rate_state == 2'h1 ? decay_rate : 4'h0) |
+						(((rate_state == 3'h2 & ~egtype) | (rate_state == 3'h3 & ~rate_suson)) ? release_rate : 4'h0) |
+						((rate_state == 3'h3 & rate_suson) ? 4'h5 : 4'h0));
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_ksr_value(.MCLK(MCLK), .en(clk1), .inp({ blk, fnum[8] }), .val(ksr_value));
+	
+	assign ksr_shift = ksr ? ksr_value : { 2'h0, ksr_value };
+	
+	ymn_dlatch l_eg_susson(.MCLK(MCLK), .en(clk1), .inp(sus_on), .val(eg_suson));
+	
+	ymn_dlatch l_eg_keyon_l0(.MCLK(MCLK), .en(clk1), .inp(key_on_comb), .val(eg_keyon_l0));
+	
+	ymn_dlatch l_eg_release_not_quiet(.MCLK(MCLK), .en(clk1), .inp(eg_is_release & ~eg_quiet), .val(eg_release_not_quiet));
+	
+	assign eg_rate_dp = eg_keyon_l0 & eg_release_not_quiet;
+	
+	assign eg_rate_rrperc = ~eg_suson & ~eg_keyon_l0 & ~egtype & ~inst_mc_l;
+	
+	assign eg_rate = eg_rate_dp ? 4'hc : (eg_rate_rrperc ? 4'h7 : rate);
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_eg_rate(.MCLK(MCLK), .en(clk2), .inp(eg_rate), .val(eg_rate_l));
+	
+	ymn_sr_bit l_eg_zero_rate(.MCLK(MCLK), .c1(clk2), .c2(clk1), .inp(eg_rate == 4'h0), .val(eg_rate_zero));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(2)) l_eg_ksr_low(.MCLK(MCLK), .en(clk2), .inp(ksr_shift[1:0]), .val(eg_ksr_low));
+	
+	ymn_dlatch #(.DATA_WIDTH(2)) l_eg_ksr_hi(.MCLK(MCLK), .en(clk2), .inp(ksr_shift[3:2]), .val(eg_ksr_hi));
+	
+	ymn_dlatch #(.DATA_WIDTH(5)) l_eg_rate_ksr(.MCLK(MCLK), .en(clk1). inp({ 1'h0, eg_rate_l } + { 3'h0, eg_ksr_hi}), .val(eg_rate_ksr));
+	
+	assign eg_rate_ksr_clamp = eg_rate_ksr[4] ? 4'hf : eg_rate_ksr[3:0];
+	
+	assign eg_rate12 = eg_rate_ksr_clamp == 4'hc;
+	assign eg_rate13 = eg_rate_ksr_clamp == 4'hd;
+	assign eg_rate14 = eg_rate_ksr_clamp == 4'he;
+	assign eg_rate15 = eg_rate_ksr_clamp == 4'hf;
+	
+	assign eg_rate_less12 = eg_rate_ksr_clamp[3:2] != 2'h3;
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_eg_rate_clamp(.MCLK(MLCK), .en(clk2), .inp(eg_rate_ksr_clamp), .val(eg_rate_clamp));
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_eg_shift(.MCLK(MCLK), .en(clk2), .inp(eg_timer_shift), .val(eg_shift));
+	
+	assign eg_rate_shift = eg_shift + eg_rate_clamp;
+	
+	ymn_dlatch l_eg_rate_zero2(.MCLK(MCLK), .en(clk2), .inp(eg_rate_zero), .val(eg_rate_zero_l));
+	ymn_dlatch #(.DATA_WIDTH(2)) l_eg_ksr_low2(.MCLK(MCLK), .en(clk2), .inp(eg_ksr_low), .val(eg_ksr_low_l));
+	ymn_dlatch l_eg_rate_less12(.MCLK(MCLK), .en(clk2), .inp(eg_rate_less12), .val(eg_rate_less12_l));
+	
+	assign eg_inclow = (eg_rate_shift == 4'hc & eg_rate_less12l & ~eg_rate_zero) |
+							 (eg_rate_shift == 4'hd & eg_rate_less12l & ~eg_rate_zero & eg_ksr_low_l[1]) |
+							 (eg_rate_shift == 4'he & eg_rate_less12l & ~eg_rate_zero & eg_ksr_low_l[0]);
+	
+	assign eg_stephi = (eg_ksr_low[1] & ~eg_timer_low[0]) |
+							 (eg_ksr_low[0] & eg_timer_low == 2'h0) |
+							 (eg_ksr_low == 2'h3 & eg_timer_low == 2'h1);
+	
+	ymn_dlatch l_eg_rate12(.MCLK(MCLK), .en(clk2), .inp(eg_rate12), .val(eg_rate12_l));
+	ymn_dlatch l_eg_rate13(.MCLK(MCLK), .en(clk2), .inp(eg_rate13), .val(eg_rate13_l));
+	ymn_dlatch l_eg_rate14(.MCLK(MCLK), .en(clk2), .inp(eg_rate14), .val(eg_rate14_l));
+	ymn_dlatch l_eg_rate15(.MCLK(MCLK), .en(clk2), .inp(eg_rate15), .val(eg_rate15_l));
+	
+	ymn_dlatch l_eg_rate15(.MCLK(MCLK), .en(clk2), .inp(eg_stephi), .val(eg_stephi_l));
+	
+	assign eg_inc1 = eg_inclow | (~eg_stephi & eg_rate_12_l);
+	assign eg_inc2 = (~eg_stephi & eg_rate13_l) | (eg_stephi & eg_rate12_l);
+	assign eg_inc3 = (eg_inclow & eg_linear & eg_subcnt_sel1_l) |
+						  (~eg_stephi & eg_linear & eg_subcnt_sel1_l & eg_rate_12_l) |
+						  (eg_stephi & eg_linear & eg_subcnt_sel2_l & eg_rate_12_l) |
+						  (~eg_stephi & eg_linear & eg_subcnt_sel2_l & eg_rate_13_l) |
+						  (~eg_stephi & eg_rate14_l) | (eg_stephi & eg_rate13_l);
+	assign eg_inc4 = (eg_stephi & eg_rate14_l) | eg_rate15_l;
+	
+	
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(2), .SR_LENGTH(16)) l_eg_state_mem(.MCLK(MCLK), .c1(clk1), .c2(clk2), inp(eg_state_next), .val(eg_state_mem));
+	ymn_sr_bit_array #(.DATA_WIDTH(2), .SR_LENGTH(2)) l_eg_state_mem2(.MCLK(MCLK), .c1(clk1), .c2(clk2), inp(eg_state_mem), .val(eg_state_mem2));
+	
+	assign eg_is_release = eg_state_mem == 2'h3;
+	
+	assign eg_start_attack = eg_is_release & keyon & eg_quiet;
+	
+	assign rate_sel = eg_start_attack ? 2'h0 : eg_state_mem;
+	
+	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_start(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_start_attack), .val(eg_state_start));
+	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_keyon(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(key_on_comb), .val(eg_state_keyon));
+	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_quiet(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_quiet), .val(eg_state_quiet));
+	
+	assign eg_state_sel[0] = eg_state_mem2 == 2'h0 & eg_state_keyon & ~eg_rate15_l & ~eg_zeroreach;
+	assign eg_state_sel[1] = ~eg_state_start & eg_state_mem2[1] & ~eg_quiet;
+	assign eg_state_sel[2] = ~eg_state_start & eg_state_mem2 == 2'h1 & ~eg_slreach & ~eg_quiet;
+	assign eg_state_sel[3] = ~eg_state_start & ~eg_state_keyon;
+	assign eg_state_sel[4] = ~eg_state_start & eg_state_mem2 == 2'h3;
+	assign eg_state_sel[5] = ~eg_state_start & eg_state_mem2 == 2'h2;
+	assign eg_state_sel[6] = ~eg_state_start & eg_state_mem2 == 2'h1 & eg_slreach;
+	assign eg_state_sel[7] = ~eg_state_start & eg_state_mem2 == 2'h1 & ~eg_slreach;
+	assign eg_state_sel[8] = ~eg_state_start & eg_state_mem2 == 2'h0 & eg_zeroreach;
+	
+	assign eg_state_next[0] = eg_state_sel[3] | eg_state_sel[4] | eg_state_sel[7] | eg_state_sel[8] | reset;
+	assign eg_state_next[1] = eg_state_sel[3] | eg_state_sel[4] | eg_state_sel[5] | eg_state_sel[6] | reset;
+	
+	assign eg_exp = eg_state_sel[0];
+	assign eg_linear = eg_state_sel[1] | eg_state_sel[2];
+	assign eg_instantattack = eg_state_start & eg_rate15_l;
+	assign eg_reset = reset | (eg_quiet & ~eg_state_start & eg_state_mem2 != 2'h0);
+	
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(7), .SR_LENGTH(16)) l_eg_level_mem(.MCLK(MCLK), .c1(clk1), .c2(clk2), inp(eg_level_next), .val(eg_level_mem));
+	ymn_sr_bit_array #(.DATA_WIDTH(7)) l_eg_level_mem1(.MCLK(MCLK), .c1(clk1), .c2(clk2), inp(eg_level_mem), .val(eg_level_mem1));
+	ymn_sr_bit_array #(.DATA_WIDTH(7)) l_eg_level_mem2(.MCLK(MCLK), .c1(clk1), .c2(clk2), inp(eg_level_mem1), .val(eg_level_mem2));
+	
+	assign eg_zeroreach = eg_level_mem2 == 7'h0;
+	
+	ymn_dlatch #(.DATA_WIDTH(4)) l_sustain(.MCLK(MCLK), .en(clk2), .inp(sustain), .val(sustain_l));
+	ymn_sr_bit_array #(.DATA_WIDTH(4)) l_eg_sustain(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(sustain_l), .val(eg_sustain));
+	
+	assign eg_slreach = eg_level_mem2[6:3] == eg_sustain;
+	
+	assign eg_add_exp4 = eg_exp ? { 1'h1, ~eg_level_mem2[6:1] } : 7'h0;
+	assign eg_add_exp3 = eg_exp ? { 2'h3, ~eg_level_mem2[6:2] } : 7'h0;
+	assign eg_add_exp2 = eg_exp ? { 3'h7, ~eg_level_mem2[6:3] } : 7'h0;
+	assign eg_add_exp1 = eg_exp ? { 4'hf, ~eg_level_mem2[6:4] } : 7'h0;
+	
+	assign eg_add = (eg_linear ? { 5'h0, eg_inc4, eg_inc3 } : 7'h0) |
+						 (eg_inc1 ? eg_add_exp1 : 7'h0) |
+						 (eg_inc2 ? eg_add_exp2 : 7'h0) |
+						 (eg_inc3 ? { eg_add_exp3[6:1], eg_add_exp3[0] & ~eg_linear } : 7'h0) |
+						 (eg_inc4 ? { eg_add_exp4[6:2], eg_add_exp4[1] & ~eg_linear, eg_add_exp4[0] } : 7'h0);
+	
+	assign eg_level_next = eg_reset ? 7'h7f : (eg_instantattack ? 7'h0 : (eg_level_mem2 + eg_add));
+	
+	assign eg_quiet = eg_level_mem[6:2] == 5'h1f;
+	
+	ymn_sr_bit l_eg_silent(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_level_mem2 == 7'h7f), .val(eg_silent));
+	
+	ymn_dlatch #(.DATA_WIDTH(8)) l_eg_ksl_tl_trem(.MCLK(MCLK), .en(clk1), .inp({ksl_tl_trem_of, ksl_tl_trem_of[6:0]}), .val(eg_ksl_tl_trem));
+	
+	ymn_dlatch #(.DATA_WIDTH(7)) l_eg_level(.MCLK(MCLK), .en(clk1), .inp(eg_level_mem1), .val(eg_level_l));
+	
+	assign eg_level_att = { 1'h0, eg_level_l } + { 1'h0, eg_ksl_tl_trem[6:0] };
+	
+	assign eg_level_clamp = (eg_level_att[7] | eg_ksl_tl_trem[7]) ? 7'h7f : eg_level_att[6:0];
+	
+	ymn_dlatch #(.DATA_WIDTH(7)) l_eg_out(.MCLK(MCLK), .en(clk2), .inp(test0 ? 7'h0 : eg_level_clamp), .val(eg_out));
+	
+	ymn_sr_bit_array #(.DATA_WIDTH(7)) l_eg_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp({ eg_dbg[5:0], 1'h0 } | (fsm_out[11] ? eg_out : 7'h0)), .val(eg_dbg));
 	
 endmodule
 
