@@ -469,7 +469,7 @@ module ym2602
 	wire w409;
 	wire w410;
 	wire [2:0] w411;
-	wire w412
+	wire w412;
 	wire w413;
 	wire w414;
 	wire w415;
@@ -554,7 +554,7 @@ module ym2602
 	wire [5:0] w490;
 	wire w491;
 	wire [2:0] w492;
-	wire [4:0] w491;
+	wire [4:0] w493;
 	wire [2:0] w494;
 	wire w495;
 	wire [3:0] w496;
@@ -562,7 +562,6 @@ module ym2602
 	wire w498;
 	wire w499;
 	wire w501_3, w501;
-	wire w501;
 	wire w502;
 	wire w503;
 	wire w504;
@@ -791,7 +790,7 @@ module ym2602
 	assign WE0 = w10;
 	
 	ymn_dlatch l11(.MCLK(MCLK), .en(hclk2), .inp(~w24), .val(w11));
-	ymn_dlatch l12(.MCLK(MCLK), .en(hclk2). .inp(w28), .val(w12));
+	ymn_dlatch l12(.MCLK(MCLK), .en(hclk2), .inp(w28), .val(w12));
 	
 	assign w13 = ~(w11 | w12);
 	assign w14 = ~(w11 | ~w12);
@@ -1064,7 +1063,7 @@ module ym2602
 	ymn_dlatch l161(.MCLK(MCLK), .en(hclk2), .inp(v_pla[12] | v_pla[13]), .val(w161));
 	
 	ymn_rs_trig2 rs151(.MCLK(MCLK), .set(reset1 | w150 | w149), .rst(w148 | w147), .q(w151));
-	ymn_rs_trig2 rs156(.MCLK(MCLK). .set(reset1 | w155 | w154), .rst(w153 | w152), .q(w156));
+	ymn_rs_trig2 rs156(.MCLK(MCLK), .set(reset1 | w155 | w154), .rst(w153 | w152), .q(w156));
 	ymn_rs_trig2 rs159(.MCLK(MCLK), .set(w158), .rst(reset1 | w157), .q(w159));
 	
 	ymn_dlatch l162(.MCLK(MCLK), .en(hclk1), .inp(w331 | (w161 & w370)), .val(w162));
@@ -1233,15 +1232,15 @@ module ym2602
 	ymn_slatch_r2 l_reg_81_b5(.MCLK(MCLK), .en(reg_sel[1]), .rst(reset1), .inp(reg_addr[5]), .val(reg_81_b5));
 	ymn_slatch_r2 l_reg_81_b6(.MCLK(MCLK), .en(reg_sel[1]), .rst(reset1), .inp(reg_addr[6]), .val(reg_81_b6));
 	
-	ymn_slatch #(.DATA_WIDTH(4)) l_reg_nt(.MCLK(MCLK), .en(reg_sel[2]), inp(reg_addr[3:0]), .val(reg_nt));
+	ymn_slatch #(.DATA_WIDTH(4)) l_reg_nt(.MCLK(MCLK), .en(reg_sel[2]), .inp(reg_addr[3:0]), .val(reg_nt));
 	
-	ymn_slatch #(.DATA_WIDTH(8)) l_reg_ct(.MCLK(MCLK), .en(reg_sel[3]), inp(reg_addr[7:0]), .val(reg_ct));
+	ymn_slatch #(.DATA_WIDTH(8)) l_reg_ct(.MCLK(MCLK), .en(reg_sel[3]), .inp(reg_addr[7:0]), .val(reg_ct));
 	
-	ymn_slatch #(.DATA_WIDTH(3)) l_reg_bg(.MCLK(MCLK), .en(reg_sel[4]), inp(reg_addr[2:0]), .val(reg_bg));
+	ymn_slatch #(.DATA_WIDTH(3)) l_reg_bg(.MCLK(MCLK), .en(reg_sel[4]), .inp(reg_addr[2:0]), .val(reg_bg));
 	
-	ymn_slatch #(.DATA_WIDTH(7)) l_reg_sat(.MCLK(MCLK), .en(reg_sel[5]), inp(reg_addr[6:0]), .val(reg_sat));
+	ymn_slatch #(.DATA_WIDTH(7)) l_reg_sat(.MCLK(MCLK), .en(reg_sel[5]), .inp(reg_addr[6:0]), .val(reg_sat));
 	
-	ymn_slatch #(.DATA_WIDTH(3)) l_reg_spr(.MCLK(MCLK), .en(reg_sel[6]), inp(reg_addr[2:0]), .val(reg_spr));
+	ymn_slatch #(.DATA_WIDTH(3)) l_reg_spr(.MCLK(MCLK), .en(reg_sel[6]), .inp(reg_addr[2:0]), .val(reg_spr));
 	
 	ymn_sr_bit l218(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w343[6]), .val(w218));
 	
@@ -1418,7 +1417,7 @@ module ym2602
 	
 	assign w293 = w292 & hclk2;
 	
-	ymn_dlatch l294(.MCLK(MCLK), .en(hclk1), .inp(w560[1]). .val(w294));
+	ymn_dlatch l294(.MCLK(MCLK), .en(hclk1), .inp(w560[1]), .val(w294));
 	
 	assign w295 = w294 & hclk2;
 	
@@ -1484,7 +1483,7 @@ module ym2602
 	
 	ymn_dlatch #(.DATA_WIDTH(6)) l310_0(.MCLK(MCLK), .en(hclk2), .inp(w308 ? 6'h0 : w310 + { 5'h0, ~w312 }), .val(w310_0));
 	
-	assign w311 = w310 | (w309 ? { 1'h1, w315, w315, 1'h0, w315, w314 }} : 6'h0);
+	assign w311 = w310 | (w309 ? { 1'h1, w315, w315, 1'h0, w315, w314 } : 6'h0);
 	
 	ymn_dlatch #(.DATA_WIDTH(6)) l310(.MCLK(MCLK), .en(hclk1), .inp(w311), .val(w310));
 	
@@ -1785,7 +1784,7 @@ module ym2602
 	
 	generate
 		for (i = 0; i < 8; i = i + 1)
-		begin
+		begin : loop1
 			assign vram_flipped[i] = vram_data[7-i];
 			assign vram_flipped[i+8] = vram_data[15-i];
 		end
@@ -1810,7 +1809,7 @@ module ym2602
 	
 	ymn_dlatch l428(.MCLK(MCLK), .en(hclk1), .inp(reg_80_b2 & w364), .val(w428));
 	
-	assign w429 = w428 ? hclk2;
+	assign w429 = w428 & hclk2;
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l430(.MCLK(MCLK), .en(w429), .inp(vram_data[8:0]), .val(w430));
 	
@@ -1926,7 +1925,7 @@ module ym2602
 	assign w483 = w482 & hclk2;
 	
 	ymn_dlatch #(.DATA_WIDTH(8)) l484(.MCLK(MCLK), .en(w483), .inp(vram_data[7:0]), .val(w484));
-	ymn_dlatch #(.DATA_WIDTH(8)) l484(.MCLK(MCLK), .en(w483), .inp(vram_data[15:8]), .val(w485));
+	ymn_dlatch #(.DATA_WIDTH(8)) l485(.MCLK(MCLK), .en(w483), .inp(vram_data[15:8]), .val(w485));
 	
 	ymn_sr_bit #(.SR_LENGTH(2)) l486(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w487), .val(w486));
 	
@@ -2017,7 +2016,7 @@ module ym2602
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(5)) l530(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w529 ? w530 : w535), .val(w530));
 	
-	ymn_dlatch #(.DATA_WIDTH(5)) l531_0(.MCLK(MCLK), en(hclk2), .inp(w529 ? w531 : w530), .val(w531_0));
+	ymn_dlatch #(.DATA_WIDTH(5)) l531_0(.MCLK(MCLK), .en(hclk2), .inp(w529 ? w531 : w530), .val(w531_0));
 	ymn_dlatch #(.DATA_WIDTH(5)) l531(.MCLK(MCLK), .en(hclk1), .inp(w531_0), .val(w531));
 	
 	assign w532 = w531;
@@ -2100,16 +2099,16 @@ module ym2602
 	assign w588 = ~(reg_81_b1 & ~reg_80_b2);
 	
 	sprite_unit1 sprite0(.MCLK(MCLK), .hclk1(hclk1), .hclk2(hclk2), .vram_data(vram_data), .w297(w297), .w366(w366), .w588(w588),
-		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w354), .i2(w303[0]), i3(w552[0]), .i4(w554[0]),
+		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w354), .i2(w303[0]), .i3(w552[0]), .i4(w554[0]),
 		.w564(sprite0_w564), .w566(sprite0_w566), .w568(sprite0_w568), .w604(sprite0_w604), .w606(sprite0_w606), .w639(sprite0_w639));
 	sprite_unit1 sprite1(.MCLK(MCLK), .hclk1(hclk1), .hclk2(hclk2), .vram_data(vram_data), .w297(w297), .w366(w366), .w588(w588),
-		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w351), .i2(w303[1]), i3(w552[1]), .i4(w554[1]),
+		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w351), .i2(w303[1]), .i3(w552[1]), .i4(w554[1]),
 		.w564(sprite1_w564), .w566(sprite1_w566), .w568(sprite1_w568), .w604(sprite1_w604), .w606(sprite1_w606), .w639(sprite1_w639));
 	sprite_unit1 sprite2(.MCLK(MCLK), .hclk1(hclk1), .hclk2(hclk2), .vram_data(vram_data), .w297(w297), .w366(w366), .w588(w588),
-		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w348), .i2(w303[2]), i3(w552[2]), .i4(w554[2]),
+		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w348), .i2(w303[2]), .i3(w552[2]), .i4(w554[2]),
 		.w564(sprite2_w564), .w566(sprite2_w566), .w568(sprite2_w568), .w604(sprite2_w604), .w606(sprite2_w606), .w639(sprite2_w639));
 	sprite_unit1 sprite3(.MCLK(MCLK), .hclk1(hclk1), .hclk2(hclk2), .vram_data(vram_data), .w297(w297), .w366(w366), .w588(w588),
-		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w345), .i2(w303[3]), i3(w552[3]), .i4(w554[3]),
+		.reg_80_b2(reg_80_b2), .reg_81_b0(reg_81_b0), .i1(w345), .i2(w303[3]), .i3(w552[3]), .i4(w554[3]),
 		.w564(sprite3_w564), .w566(sprite3_w566), .w568(sprite3_w568), .w604(sprite3_w604), .w606(sprite3_w606), .w639(sprite3_w639));
 	
 	sprite_unit2 sprite4(.MCLK(MCLK), .hclk1(hclk1), .hclk2(hclk2), .vram_data(vram_data), .w366(w366),
@@ -2167,7 +2166,7 @@ module ym2602
 	
 	reg [5:0] tms_color;
 	
-	always (*)
+	always @(*)
 	begin
 		case (w660)
 			4'h0: tms_color <= 6'b000000;
@@ -2324,7 +2323,7 @@ module ym2602
 									(w455 ? 14'h0018 : 14'h0) |
 									(w525 ? 14'h0007 : 14'h0) |
 									(w528 ? 14'h0018 : 14'h0) |
-									(w540 ? 14'h0002 : 14'h0));
+									(w540 ? 14'h0002 : 14'h0);
 	
 	wire [13:0] va_value =  (w42 ? { 1'h1, w3[7:1], 6'h3f } : 14'h3fff) &
 									(w40 ? { 8'hff, w3[0], 5'h1f } : 14'h3fff) &
@@ -2345,7 +2344,7 @@ module ym2602
 									(w226 ? { reg_nt, 10'h3ff } : 14'h3fff) &
 									(w219 ? { reg_ct, 6'h3f } : 14'h3fff) &
 									(w224 ? { reg_bg, 11'h7ff } : 14'h3fff) &
-									(w222 ? { reg_sat, 7'7f } : 14'h3fff) &
+									(w222 ? { reg_sat, 7'h7f } : 14'h3fff) &
 									(w229 ? { reg_spr, 11'h7ff } : 14'h3fff) &
 									(w231 ? reg_addr : 14'h3fff) &
 									(w395 ? { 3'h7, w411[2:0], w402[4:3], w396[4:0], 1'h1 } : 14'h3fff) &
@@ -2356,14 +2355,14 @@ module ym2602
 									(w455 ? { 9'h1ff, w449[1:0], 3'h7 } : 14'h3fff) &
 									(w525 ? { 11'h7ff, w522_0[2:0] } : 14'h3fff) &
 									(w528 ? { 9'h1ff, ~w313[1], w522_0[3] } : 14'h3fff) &
-									(w540 ? { 12'hfff, ~w537[1], 1'h1 } : 14'h3fff));
+									(w540 ? { 12'hfff, ~w537[1], 1'h1 } : 14'h3fff);
 	
 	reg [13:0] vram_address_mem;
 	
 	assign vram_address = (va_update & va_value)
-								| (~va_update ? va_address_mem);
+								| (~va_update & va_address_mem);
 	
-	always (@posedge MCLK)
+	always @(posedge MCLK)
 	begin
 		vram_address_mem <= vram_address;
 	end
@@ -2392,7 +2391,7 @@ module ym2602
 									sprite2_w564|sprite2_w606|sprite3_w564|sprite3_w606|
 									sprite4_w638|sprite5_w638|sprite6_w638|sprite7_w638) ? color_index_mem : 4'hf);
 	
-	always (@posedge MCLK)
+	always @(posedge MCLK)
 	begin
 		color_index_mem <= color_index;
 	end
@@ -2466,7 +2465,7 @@ module sprite_unit1
 	ymn_dlatch l561(.MCLK(MCLK), .en(hclk1), .inp(i1), .val(w561));
 	assign w562 = w561 & hclk2;
 	
-	ymn_dlatch l563(.MCLK(MCLK), .en(hclk1). .inp(w567), .val(w563));
+	ymn_dlatch l563(.MCLK(MCLK), .en(hclk1), .inp(w567), .val(w563));
 	assign w564 = w563 & hclk2;
 	
 	assign w565 = w568 == 4'h0;
@@ -2552,7 +2551,7 @@ module sprite_unit1
 	
 	assign w603 = reg_80_b2 ? { ~w601, ~w595, ~w600, ~w594 } : { 3'h0, ~w594 };
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(4)) l639_1(.MCLK(MCLK), .c1(hclk1), .c2(hclk2) .inp(w603), .val(w639_1));
+	ymn_sr_bit_array #(.DATA_WIDTH(4)) l639_1(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w603), .val(w639_1));
 	ymn_dlatch #(.DATA_WIDTH(4)) l639(.MCLK(MCLK), .en(hclk1), .inp(w639_1), .val(w639));
 	
 	ymn_dlatch l605(.MCLK(MCLK), .en(hclk1), .inp(~(~reg_80_b2 | ~i2)), .val(w605));
@@ -2672,7 +2671,7 @@ module sprite_unit2
 	
 	assign w636 = w635 == 4'h0;
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(4)) l637_1(.MCLK(MCLK), .c1(hclk1), .c2(hclk2) .inp(w635), .val(w637_1));
+	ymn_sr_bit_array #(.DATA_WIDTH(4)) l637_1(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w635), .val(w637_1));
 	ymn_dlatch #(.DATA_WIDTH(4)) l637(.MCLK(MCLK), .en(hclk1), .inp(w637_1), .val(w637));
 	
 	ymn_dlatch l640(.MCLK(MCLK), .en(hclk1), .inp(i3), .val(w640));
