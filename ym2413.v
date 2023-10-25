@@ -106,6 +106,7 @@ module ym2413
 	wire rhy_bd1;
 	wire rhy_sd;
 	wire rhy_tc;
+	wire is_rhy_op;
 	wire [3:0] instr;
 	wire key_on;
 	wire inst_hh_tom_l;
@@ -264,6 +265,7 @@ module ym2413
 	wire eg_start_attack;
 	wire [1:0] rate_sel;
 	wire eg_state_start;
+	wire eg_state_start1;
 	wire eg_state_keyon;
 	wire eg_state_quiet;
 	wire [8:0] eg_state_sel;
@@ -333,7 +335,7 @@ module ym2413
 	wire [11:0] op_value;
 	wire [11:0] op_fb1_mem1, op_fb1_mem2;
 	wire [11:0] op_fb2_mem1, op_fb2_mem2;
-	wire [9:0] op_fm;
+	wire [8:0] op_fm;
 	wire [12:0] op_fb_sum1;
 	wire [11:0] op_fb_sum;
 	wire [6:0] op_fb_sel;
@@ -515,17 +517,19 @@ module ym2413
 	assign test3 = regs_f_v[3];
 	
 	ymn_sr_bit l_rhy_sel0(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(fsm_out[6]), .val(rhy_sel0));
-	ymn_sr_bit l_rhy_sel1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_sel0 & rhythm), .val(rhy_bd0));
-	ymn_sr_bit l_rhy_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_bd0), .val(rhy_hh));
-	ymn_sr_bit l_rhy_sel3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_hh), .val(rhy_tom));
-	ymn_sr_bit l_rhy_sel4(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_tom), .val(rhy_bd1));
-	ymn_sr_bit l_rhy_sel5(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_bd1), .val(rhy_sd));
-	ymn_sr_bit l_rhy_sel6(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_sd), .val(rhy_tc));
+	assign rhy_bd0 = rhy_sel0 & rhythm;
+	ymn_sr_bit l_rhy_sel1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_bd0), .val(rhy_hh));
+	ymn_sr_bit l_rhy_sel2(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_hh), .val(rhy_tom));
+	ymn_sr_bit l_rhy_sel3(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_tom), .val(rhy_bd1));
+	ymn_sr_bit l_rhy_sel4(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_bd1), .val(rhy_sd));
+	ymn_sr_bit l_rhy_sel5(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(rhy_sd), .val(rhy_tc));
+	
+	assign is_rhy_op = rhy_bd0 | rhy_hh | rhy_tom | rhy_bd1 | rhy_sd | rhy_tc;
 	
 	ymn_dlatch inst_hh_tom(.MCLK(MCLK), .en(clk1), .inp(rhy_hh | rhy_tom), .val(inst_hh_tom_l));
-	ymn_dlatch inst_kon(.MCLK(MCLK), .en(clk1), .inp(key_on), .val(inst_kon_l));
+	ymn_dlatch inst_kon(.MCLK(MCLK), .en(clk1), .inp(key_on_comb), .val(inst_kon_l));
 	ymn_dlatch inst_mc(.MCLK(MCLK), .en(clk1), .inp(fsm_out[3]), .val(inst_mc_l));
-	ymn_dlatch inst_cust(.MCLK(MCLK), .en(clk1), .inp(instr == 4'h0), .val(inst_cust_l));
+	ymn_dlatch inst_cust(.MCLK(MCLK), .en(clk1), .inp(instr == 4'h0 & ~is_rhy_op), .val(inst_cust_l));
 	
 	assign force_zerorate = ~inst_hh_tom_l & ~inst_kon_l & inst_mc_l;
 	
@@ -539,6 +543,7 @@ module ym2413
 	wire [36:0] instr_data_m;
 	wire [36:0] instr_data_c;
 	reg [36:0] instr_data_l;
+	reg [36:0] instr_data_l2;
 	
 	assign instr_data_m[36:26] = instr_data[62:52];
 	assign instr_data_c[36:26] = instr_data[62:52];
@@ -571,28 +576,44 @@ module ym2413
 			else
 			begin
 				case (instr)
-					4'h1: instr_data <= 63'b011110101110011111000000011000010110111010000000000000100010101;
-					4'h2: instr_data <= 63'b011010011010001001000001011000011110111100101010000100100001111;
-					4'h3: instr_data <= 63'b011001000000000001000001011100011111010000110000000011000000111;
-					4'h4: instr_data <= 63'b001110001110001111000000011000010011100100100000010111000010101;
-					4'h5: instr_data <= 63'b011110001100000111000001001000010111101000101000000010001000000;
-					4'h6: instr_data <= 63'b010110001010000111000000110000010111101000000010000000101000000;
-					4'h7: instr_data <= 63'b011101001110001110000000011000011000000000010010000001000010101;
-					4'h8: instr_data <= 63'b101101101000000110000001011000010011101000011000000000000010101;
-					4'h9: instr_data <= 63'b011011001100011110000000011000000111100001100010000001100010101;
-					4'ha: instr_data <= 63'b001011110000011010000000011000011010101001101110010101000010111;
-					4'hb: instr_data <= 63'b000011100010000001000001011100011111110100110000000001000010000;
-					4'hc: instr_data <= 63'b100100001110101001000101011000011111111110000000000100100001100;
-					4'hd: instr_data <= 63'b001100001010011100100000010000011110101000110010001100000000100;
-					4'he: instr_data <= 63'b010101000110000000000000011001011100001100100110000000000001110;
-					4'hf: instr_data <= 63'b001001000110011100000000011100011111110000100100010000100000101;
+					//4'h1: instr_data <= 63'b011110101110011111000000011000010110111010000000000000100010101;
+					//4'h2: instr_data <= 63'b011010011010001001000001011000011110111100101010000100100001111;
+					//4'h3: instr_data <= 63'b011001000000000001000001011100011111010000110000000011000000111;
+					//4'h4: instr_data <= 63'b001110001110001111000000011000010011100100100000010111000010101;
+					//4'h5: instr_data <= 63'b011110001100000111000001001000010111101000101000000010001000000;
+					//4'h6: instr_data <= 63'b010110001010000111000000110000010111101000000010000000101000000;
+					//4'h7: instr_data <= 63'b011101001110001110000000011000011000000000010010000001000010101;
+					//4'h8: instr_data <= 63'b101101101000000110000001011000010011101000011000000000000010101;
+					//4'h9: instr_data <= 63'b011011001100011110000000011000000111100001100010000001100010101;
+					//4'ha: instr_data <= 63'b001011110000011010000000011000011010101001101110010101000010111;
+					//4'hb: instr_data <= 63'b000011100010000001000001011100011111110100110000000001000010000;
+					//4'hc: instr_data <= 63'b100100001110101001000101011000011111111110000000000100100001100;
+					//4'hd: instr_data <= 63'b001100001010011100100000010000011110101000110010001100000000100;
+					//4'he: instr_data <= 63'b010101000110000000000000011001011100001100100110000000000001110;
+					//4'hf: instr_data <= 63'b001001000110011100000000011100011111110000100100010000100000101;
+					4'h1: instr_data <= 63'b000101001100000010000001011000011101000100000010010010000011101;
+					4'h2: instr_data <= 63'b010100011010001001000001011000011110111100101000000100100001110;
+					4'h3: instr_data <= 63'b001000010000000001100000011000011101111100011000000100100000100;
+					4'h4: instr_data <= 63'b001100001110001111000000011000010011100100100000010110000010111;
+					4'h5: instr_data <= 63'b011110001100000111000001001000010111101000101100000010001000010;
+					4'h6: instr_data <= 63'b000110000000000000000001001000011011100000011101111111100110000;
+					4'h7: instr_data <= 63'b011101001110001110000000011000011000000000010010000001000010111;
+					4'h8: instr_data <= 63'b100010101110000110000001011000010011101000011000000000100010111;
+					4'h9: instr_data <= 63'b100101000000000101100100011000000110101000001010010101000001001;
+					4'ha: instr_data <= 63'b001111011111000101000100011000011001100100100010010001000000110;
+					4'hb: instr_data <= 63'b100100001110101001000101011000011111111110000000000100100001100;
+					4'hc: instr_data <= 63'b010001001100010111000000111000000111101001100100000001110010100;
+					4'hd: instr_data <= 63'b010011001010000000000000110101011100001100100110000000000001110;
+					4'he: instr_data <= 63'b001100000000011110000000111000011010010001000000101111100011110;
+					4'hf: instr_data <= 63'b001101000000001110100000110000011110001000100110010001000111100;
 					default: instr_data <= 63'b000000000000000000000000000000000000000000000000000000000000000;
 				endcase
 			end
+			instr_data_l2 <= fsm_out[3] ? instr_data_m : instr_data_c;
 		end
 		if (clk1)
 		begin
-			instr_data_l <= fsm_out[6] ? instr_data_m : instr_data_c;
+			instr_data_l <= instr_data_l2;
 		end
 	end
 	
@@ -614,11 +635,11 @@ module ym2413
 	
 	assign ch_data_enable = ~(ch_data_enable_l | reset | ~write0);
 	
-	cnt_bit_2 ch_idx0(.c_in(1'h1), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[0]), .c_out(ch_idx_c[0]));
-	cnt_bit_2 ch_idx1(.c_in(ch_idx_c[0]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[1]), .c_out(ch_idx_c[1]));
-	cnt_bit_2 ch_idx2(.c_in(ch_idx_c[1]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[2]), .c_out(ch_idx_c[2]));
-	cnt_bit_2 ch_idx3(.c_in(ch_idx_c[2]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[3]), .c_out(ch_idx_c[3]));
-	cnt_bit_2 ch_idx4(.c_in(ch_idx_c[3]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[4]));
+	cnt_bit_2 ch_idx0(.MCLK(MCLK), .c_in(1'h1), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[0]), .c_out(ch_idx_c[0]));
+	cnt_bit_2 ch_idx1(.MCLK(MCLK), .c_in(ch_idx_c[0]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[1]), .c_out(ch_idx_c[1]));
+	cnt_bit_2 ch_idx2(.MCLK(MCLK), .c_in(ch_idx_c[1]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[2]), .c_out(ch_idx_c[2]));
+	cnt_bit_2 ch_idx3(.MCLK(MCLK), .c_in(ch_idx_c[2]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[3]), .c_out(ch_idx_c[3]));
+	cnt_bit_2 ch_idx4(.MCLK(MCLK), .c_in(ch_idx_c[3]), .reset(fsm_out[10]), .c1(clk1), .c2(clk2), .val(ch_idx[4]));
 	
 	assign ch_data_enable2 = ch_data_enable & (~ch_idx == { 1'h0, ch_reg_addr[3:0] });
 	
@@ -847,7 +868,7 @@ module ym2413
 			rh_hh_bit7 = phase_mem[16];
 			rh_hh_bit8 = phase_mem[17];
 		end
-		if (fsm_out[5] & ~rh_sel_hh_l)
+		if (rh_sel_tc & ~rh_sel_tc_l)
 		begin
 			rh_tc_bit3 = phase_mem[12];
 			rh_tc_bit5 = phase_mem[14];
@@ -886,11 +907,11 @@ module ym2413
 	
 	ymn_sr_bit l_trem_car(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(trem_sum[1]), .val(trem_car));
 	
-	ymn_sr_bit_array l_trem_val(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp({ (reset | test1) ? 1'h0 : trem_sum[0], trem_val[8:1] }), .val(trem_val));
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_trem_val(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp({ (reset | test1) ? 1'h0 : trem_sum[0], trem_val[8:1] }), .val(trem_val));
 	
 	assign trem_of = (trem_val[6:0] == 7'h0 & fsm_out[11] & trem_dir) | ((trem_val[6:0] & 7'd105) == 7'd105 & fsm_out[11] & ~trem_dir);
 	
-	assign trem_sum = { 1'h0, trem_val[0] } + { 1'h0, trem_car & fsm_out[9] } + { 1'h0, (trem_sync_l | test3) & (trem_dir | fsm_out[11]) & fsm_out[9] };
+	assign trem_sum = { 1'h0, trem_val[0] } + { 1'h0, trem_car & fsm_out[9] } + { 1'h0, (trem_clk | test3) & (trem_dir | fsm_out[11]) & fsm_out[9] };
 	
 	ymn_dlatch l_trem_load(.MCLK(MCLK), .en(clk1), .inp(fsm_out[11]), .val(trem_load_l));
 	
@@ -992,8 +1013,8 @@ module ym2413
 	assign rate = force_zerorate ? 4'h0 :
 						((rate_state == 2'h0 ? attack_rate : 4'h0) |
 						(rate_state == 2'h1 ? decay_rate : 4'h0) |
-						(((rate_state == 3'h2 & ~egtype) | (rate_state == 3'h3 & ~rate_suson)) ? release_rate : 4'h0) |
-						((rate_state == 3'h3 & rate_suson) ? 4'h5 : 4'h0));
+						(((rate_state == 2'h2 & ~egtype) | (rate_state == 2'h3 & ~rate_suson)) ? release_rate : 4'h0) |
+						((rate_state == 2'h3 & rate_suson) ? 4'h5 : 4'h0));
 	
 	ymn_dlatch #(.DATA_WIDTH(4)) l_ksr_value(.MCLK(MCLK), .en(clk1), .inp({ blk, fnum[8] }), .val(ksr_value));
 	
@@ -1040,9 +1061,9 @@ module ym2413
 	ymn_dlatch #(.DATA_WIDTH(2)) l_eg_ksr_low2(.MCLK(MCLK), .en(clk2), .inp(eg_ksr_low), .val(eg_ksr_low_l));
 	ymn_dlatch l_eg_rate_less12(.MCLK(MCLK), .en(clk2), .inp(eg_rate_less12), .val(eg_rate_less12_l));
 	
-	assign eg_inclow = (eg_rate_shift == 4'hc & eg_rate_less12_l & ~eg_rate_zero) |
-							 (eg_rate_shift == 4'hd & eg_rate_less12_l & ~eg_rate_zero & eg_ksr_low_l[1]) |
-							 (eg_rate_shift == 4'he & eg_rate_less12_l & ~eg_rate_zero & eg_ksr_low_l[0]);
+	assign eg_inclow = (eg_rate_shift == 4'hc & eg_rate_less12_l & ~eg_rate_zero_l) |
+							 (eg_rate_shift == 4'hd & eg_rate_less12_l & ~eg_rate_zero_l & eg_ksr_low_l[1]) |
+							 (eg_rate_shift == 4'he & eg_rate_less12_l & ~eg_rate_zero_l & eg_ksr_low_l[0]);
 	
 	assign eg_stephi = (eg_ksr_low[1] & ~eg_timer_low[0]) |
 							 (eg_ksr_low[0] & eg_timer_low == 2'h0) |
@@ -1055,14 +1076,14 @@ module ym2413
 	
 	ymn_dlatch l_eg_stephi(.MCLK(MCLK), .en(clk2), .inp(eg_stephi), .val(eg_stephi_l));
 	
-	assign eg_inc1 = eg_inclow | (~eg_stephi & eg_rate12_l);
-	assign eg_inc2 = (~eg_stephi & eg_rate13_l) | (eg_stephi & eg_rate12_l);
+	assign eg_inc1 = eg_inclow | (~eg_stephi_l & eg_rate12_l);
+	assign eg_inc2 = (~eg_stephi_l & eg_rate13_l) | (eg_stephi_l & eg_rate12_l);
 	assign eg_inc3 = (eg_inclow & eg_linear & eg_subcnt_sel1_l) |
-						  (~eg_stephi & eg_linear & eg_subcnt_sel1_l & eg_rate12_l) |
-						  (eg_stephi & eg_linear & eg_subcnt_sel2_l & eg_rate12_l) |
-						  (~eg_stephi & eg_linear & eg_subcnt_sel2_l & eg_rate13_l) |
-						  (~eg_stephi & eg_rate14_l) | (eg_stephi & eg_rate13_l);
-	assign eg_inc4 = (eg_stephi & eg_rate14_l) | eg_rate15_l;
+						  (~eg_stephi_l & eg_linear & eg_subcnt_sel1_l & eg_rate12_l) |
+						  (eg_stephi_l & eg_linear & eg_subcnt_sel2_l & eg_rate12_l) |
+						  (~eg_stephi_l & eg_linear & eg_subcnt_sel2_l & eg_rate13_l) |
+						  (~eg_stephi_l & eg_rate14_l) | (eg_stephi_l & eg_rate13_l);
+	assign eg_inc4 = (eg_stephi_l & eg_rate14_l) | eg_rate15_l;
 	
 	
 	
@@ -1075,13 +1096,16 @@ module ym2413
 	
 	assign rate_sel = eg_start_attack ? 2'h0 : eg_state_mem;
 	
-	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_start(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_start_attack), .val(eg_state_start));
+	assign phase_reset = eg_state_start1;
+	
+	ymn_sr_bit l_eg_state_start1(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_start_attack), .val(eg_state_start1));
+	ymn_sr_bit l_eg_state_start(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_state_start1), .val(eg_state_start));
 	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_keyon(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(key_on_comb), .val(eg_state_keyon));
 	ymn_sr_bit #(.SR_LENGTH(2)) l_eg_state_quiet(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_quiet), .val(eg_state_quiet));
 	
 	assign eg_state_sel[0] = eg_state_mem2 == 2'h0 & eg_state_keyon & ~eg_rate15_l & ~eg_zeroreach;
-	assign eg_state_sel[1] = ~eg_state_start & eg_state_mem2[1] & ~eg_quiet;
-	assign eg_state_sel[2] = ~eg_state_start & eg_state_mem2 == 2'h1 & ~eg_slreach & ~eg_quiet;
+	assign eg_state_sel[1] = ~eg_state_start & eg_state_mem2[1] & ~eg_state_quiet;
+	assign eg_state_sel[2] = ~eg_state_start & eg_state_mem2 == 2'h1 & ~eg_slreach & ~eg_state_quiet;
 	assign eg_state_sel[3] = ~eg_state_start & ~eg_state_keyon;
 	assign eg_state_sel[4] = ~eg_state_start & eg_state_mem2 == 2'h3;
 	assign eg_state_sel[5] = ~eg_state_start & eg_state_mem2 == 2'h2;
@@ -1095,7 +1119,7 @@ module ym2413
 	assign eg_exp = eg_state_sel[0];
 	assign eg_linear = eg_state_sel[1] | eg_state_sel[2];
 	assign eg_instantattack = eg_state_start & eg_rate15_l;
-	assign eg_reset = reset | (eg_quiet & ~eg_state_start & eg_state_mem2 != 2'h0);
+	assign eg_reset = reset | (eg_state_quiet & ~eg_state_start & eg_state_mem2 != 2'h0);
 	
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(7), .SR_LENGTH(16)) l_eg_level_mem(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(eg_level_next), .val(eg_level_mem));
@@ -1135,6 +1159,7 @@ module ym2413
 	assign eg_level_clamp = (eg_level_att[7] | eg_ksl_tl_trem[7]) ? 7'h7f : eg_level_att[6:0];
 	
 	ymn_dlatch #(.DATA_WIDTH(7)) l_eg_out(.MCLK(MCLK), .en(clk2), .inp(test0 ? 7'h0 : eg_level_clamp), .val(eg_out));
+	//assign eg_out = 7'd30;
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(7)) l_eg_dbg(.MCLK(MCLK), .c1(clk1), .c2(clk2),
 		.inp({ eg_dbg[5:0], 1'h0 } | (fsm_out[11] ? eg_out : 7'h0)), .val(eg_dbg));
@@ -1237,7 +1262,7 @@ module ym2413
 	
 	assign op_att_sum = { 1'h0, sin_sum_l } + { 1'h0, eg_out, 4'h0 };
 	
-	assign op_att_clamp = ~(op_att_sum[12] ? 12'hfff : op_att_clamp[11:0]);
+	assign op_att_clamp = ~(op_att_sum[12] ? 12'hfff : op_att_sum[11:0]);
 	
 	ymn_sr_bit_array #(.DATA_WIDTH(4)) l_op_shift(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(op_att_clamp[11:8]), .val(op_shift));
 	
@@ -1333,17 +1358,17 @@ module ym2413
 	ymn_sr_bit #(.SR_LENGTH(2)) l_op_wf_mod(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(wf_mod_l), .val(op_wf_mod));
 	ymn_sr_bit #(.SR_LENGTH(2)) l_op_wf_car(.MCLK(MCLK), .c1(clk1), .c2(clk2), .inp(wf_car_l), .val(op_wf_car));
 	
-	assign op_mute = eg_silent | (fsm_out[2] & op_wf_car & op_sign) | (~fsm_out[2] & op_wf_mod & op_sign);
+	assign op_mute = eg_silent | (fsm_out[2] & op_wf_mod & op_sign) | (~fsm_out[2] & op_wf_car & op_sign);
 	
-	assign op_shift0 = op_shift[3:2] == 2'h0 & ~op_mute;
-	assign op_shift4 = op_shift[3:2] == 2'h1 & ~op_mute;
-	assign op_shift8 = op_shift[3:2] == 2'h2 & ~op_mute;
+	assign op_shift0 = op_shift[3:2] == 2'h3 & ~op_mute;
+	assign op_shift4 = op_shift[3:2] == 2'h2 & ~op_mute;
+	assign op_shift8 = op_shift[3:2] == 2'h1 & ~op_mute;
 	assign op_shiftc = ~(op_shift0 | op_shift4 | op_shift8);
 	
-	assign pow_shift1 = (op_shift[1:0] == 2'h0 ? { 1'h1, pow_sum_l } : 11'h0) |
-							  (op_shift[1:0] == 2'h1 ? { 2'h1, pow_sum_l[9:1] } : 11'h0) |
-							  (op_shift[1:0] == 2'h2 ? { 3'h1, pow_sum_l[9:2] } : 11'h0) |
-							  (op_shift[1:0] == 2'h3 ? { 4'h1, pow_sum_l[9:3] } : 11'h0);
+	assign pow_shift1 = (op_shift[1:0] == 2'h3 ? { 1'h1, pow_sum_l } : 11'h0) |
+							  (op_shift[1:0] == 2'h2 ? { 2'h1, pow_sum_l[9:1] } : 11'h0) |
+							  (op_shift[1:0] == 2'h1 ? { 3'h1, pow_sum_l[9:2] } : 11'h0) |
+							  (op_shift[1:0] == 2'h0 ? { 4'h1, pow_sum_l[9:3] } : 11'h0);
 	
 	assign pow_shift2 = (op_shift0 ? pow_shift1 : 11'h0) |
 							  (op_shift4 ? { 4'h0, pow_shift1[10:4] } : 11'h0) |
@@ -1362,8 +1387,8 @@ module ym2413
 	ymn_sr_bit_array #(.DATA_WIDTH(12), .SR_LENGTH(3)) l_op_fb2_mem2(.MCLK(MCLK), .c1(clk1), .c2(clk2),
 		.inp(op_fb2_mem1), .val(op_fb2_mem2));
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(10)) l_op_fm(.MCLK(MCLK), .c1(clk1), .c2(clk2),
-		.inp(op_value[9:0]), .val(op_fm));
+	ymn_sr_bit_array #(.DATA_WIDTH(9)) l_op_fm(.MCLK(MCLK), .c1(clk1), .c2(clk2),
+		.inp(op_value[8:0]), .val(op_fm));
 	
 	assign op_fb_sum1 = { op_fb1_mem1[11], op_fb1_mem1 } + { op_fb2_mem1[11], op_fb2_mem1 };
 	
@@ -1382,7 +1407,7 @@ module ym2413
 	assign op_fb_sel[5] = modcar_sel_rhy & feedback_l == 3'h6;
 	assign op_fb_sel[6] = modcar_sel_rhy & feedback_l == 3'h7;
 	
-	assign op_phase_mod = (op_mod_sel ? op_fm : 10'h0) |
+	assign op_phase_mod = (op_mod_sel ? { op_fm, 1'h0 } : 10'h0) |
 								 (op_fb_sel[0] ? { {4{op_fb_sum[11]}}, op_fb_sum[11:6] } : 10'h0) |
 								 (op_fb_sel[1] ? { {3{op_fb_sum[11]}}, op_fb_sum[11:5] } : 10'h0) |
 								 (op_fb_sel[2] ? { {2{op_fb_sum[11]}}, op_fb_sum[11:4] } : 10'h0) |
@@ -1416,7 +1441,7 @@ module ym2413
 	assign dac_en_m = ch_en_m & dac_clk;
 	assign dac_en_r = ch_en_r & dac_clk;
 	
-	wire DAC_sign = ~dac_value[8];
+	wire DAC_sign = dac_value[8];
 	wire [9:0] DAC_matrix_out = DAC_sign ? { 2'h3, ~dac_value[7:0] } : ({ 2'h0, dac_value[7:0] } + 10'h1);
 	wire [9:0] DAC_silent = DAC_sign ? 10'h3ff : 10'h1;
 	
@@ -1442,7 +1467,7 @@ module reg_handler
 	
 	wire val1;
 	
-	ymn_sr_bit mem(.MCLK(MCLK), .c1(c1), .c2(c2), .inp(write0 ? sel : val1), .val(val1));
+	ymn_sr_bit mem(.MCLK(MCLK), .c1(c1), .c2(c2), .inp(write0 ? val1 : sel), .val(val1));
 	
 	assign val = val1 & write1;
 	
@@ -1461,8 +1486,7 @@ module reg_bit2 #(parameter DATA_WIDTH = 1)
 	
 	always @(posedge MCLK)
 	begin
-		if (en)
-			mem <= en ? inp : (rst ? {DATA_WIDTH{1'h0}} : mem);
+		mem <= en ? inp : (rst ? {DATA_WIDTH{1'h0}} : mem);
 	end
 	
 	assign val = mem;
