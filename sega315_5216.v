@@ -75,8 +75,8 @@ module sega315_5216
 	fujitsu_dffs l_reg_3f_6(.MCLK(MCLK), .set(reset), .inp(data[6]), .clk(write1), .val(reg_3f_6));
 	fujitsu_dffs l_reg_3f_7(.MCLK(MCLK), .set(reset), .inp(data[7]), .clk(write1), .val(reg_3f_7));
 	
-	assign PORT_A_d = { reg_3f_1, 1'h1, reg_3f_10, 4'hf };
-	assign PORT_B_d = { reg_3f_3, 1'h1, reg_3f_12, 4'hf };
+	assign PORT_A_d = { reg_3f_1, 1'h1, reg_3f_0, 4'hf };
+	assign PORT_B_d = { reg_3f_3, 1'h1, reg_3f_2, 4'hf };
 	
 	assign PORT_A_o = {
 		reg_3f_1 ? PORT_A_i[6] : reg_3f_5,

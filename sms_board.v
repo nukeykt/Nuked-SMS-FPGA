@@ -43,15 +43,18 @@ module sms_board
 	output [6:0] port_a_d,
 	input [6:0] port_b_i,
 	output [6:0] port_b_o,
-	output [6:0] port_b_d
+	output [6:0] port_b_d,
+	
+	// extra
+	output vdp_hclk1
 	);
 	
-	reg clk_div[2:0] = 3'h0;
+	reg [2:0] clk_div = 3'h0;
 	reg clk_val;
 	
-	reg ADDRESS[15:0];
-	reg DATA[7:0];
-	reg AD[15:0];
+	reg [15:0]ADDRESS;
+	reg [7:0]DATA;
+	reg [15:0]AD;
 	wire HL;
 	wire RD;
 	wire WR;
@@ -68,15 +71,20 @@ module sms_board
 	wire EXM1;
 	wire EXM2;
 	wire YS;
-	wire [15:0] vdp_AD;
+	wire [15:0] vdp_AD_o;
 	wire vdp_AD_d;
 	wire vdp_OE;
 	wire vdp_WE0;
 	wire vdp_WE1;
-	wire vdp_CE,
+	wire vdp_CE;
 	wire INT;
 	wire [7:0] io_DATA_o;
 	wire io_DATA_d;
+	wire CE0;
+	wire CE1;
+	wire CE2;
+	wire CE3;
+	wire CE4;
 	wire [15:0] z80_ADDRESS_o;
 	wire z80_ADDRESS_d;
 	wire [7:0] z80_DATA_o;
@@ -90,6 +98,8 @@ module sms_board
 	wire z80_RD_d;
 	wire z80_WR_o;
 	wire z80_WR_d;
+	reg o_vdp_CE;
+	reg [12:0] vram_address;
 	
 	always @(posedge MCLK)
 	begin
@@ -132,9 +142,12 @@ module sms_board
 		.WE0(vdp_WE0),
 		.WE1(vdp_WE1),
 		.CE(vdp_CE),
-		.INT(vdp_INT),
-		.PSG(vdp_psg)
+		.INT(INT),
+		.PSG(vdp_psg),
+		.vdp_hclk1(vdp_hclk1)
 		);
+	
+	assign vid_csync = CSYNC;
 
 	ym2413 fm
 		(
@@ -162,20 +175,20 @@ module sms_board
 		.CONT2(1'h1), // FIXME
 		.KILLGA(1'h0),
 		.CSRAM(CSRAM),
-		.RESET(RESET),
+		.RESET(~ext_reset),
 		.PORT_A_i(port_a_i),
 		.PORT_B_i(port_b_i),
-		.DATA_o(io_DATA),
-		.DATA_d(io_DATA_d)
+		.DATA_o(io_DATA_o),
+		.DATA_d(io_DATA_d),
 		.CE0(CE0),
 		.CE1(CE1),
 		.CE2(CE2),
 		.CE3(CE3),
 		.CE4(CE4),
 		.PORT_A_o(port_a_o),
-		.PORT_A_o(port_a_d),
+		.PORT_A_d(port_a_d),
 		.PORT_B_o(port_b_o),
-		.PORT_B_o(port_b_d),
+		.PORT_B_d(port_b_d),
 		.HL(HL)
 		);
 	
@@ -230,6 +243,8 @@ module sms_board
 	wire bios_oe = ~CE0 & ~EXM2;
 	assign ram_wren = ~CE1 & ~WR;
 	
+	wire [15:0] vram_q;
+	
 	always @(posedge MCLK)
 	begin
 		if (~z80_DATA_d)
@@ -251,7 +266,25 @@ module sms_board
 		if (~vdp_AD_d)
 			AD <= vdp_AD_o;
 		else if (~vdp_CE & ~vdp_OE)
-			AD <= 16'h0; // TODO: vram
+			AD <= vram_q;
+		
+		if (o_vdp_CE & ~vdp_CE)
+			vram_address <= AD[12:0];
+		
+		o_vdp_CE <= vdp_CE;
 	end
+	
+	vram vram
+		(
+		.address(vram_address),
+		.clock(MCLK),
+		.data(AD),
+		.wren(~vdp_CE & (~vdp_WE0 | ~vdp_WE1)),
+		.byteena({~vdp_WE1, ~vdp_WE0}),
+		.q(vram_q)
+		);
+	
+	assign aud_l = {2'h0,vdp_psg} + {opll_ro[9], opll_ro, 7'h0} + {opll_mo[9], opll_mo, 7'h0};
+	assign aud_r = {2'h0,vdp_psg} + {opll_ro[9], opll_ro, 7'h0} + {opll_mo[9], opll_mo, 7'h0};
 	
 endmodule
