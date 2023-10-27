@@ -830,7 +830,7 @@ module ym2602
 	ymn_dlatch l17(.MCLK(MCLK), .en(clk1), .inp(~w16), .val(w17));
 	ymn_dlatch l18(.MCLK(MCLK), .en(clk2), .inp(~w17), .val(w18));
 	ymn_dlatch l19(.MCLK(MCLK), .en(clk1), .inp(~w18), .val(w19));
-	ymn_dlatch l20(.MCLK(MCLK), .en(clk2), .inp(~w19), .val(w20));
+	ymn_dlatch l20(.MCLK(MCLK), .en(clk2), .inp(w19), .val(w20));
 	
 	assign w21 = ~(w19 | w20);
 	assign CE = w21;
@@ -848,7 +848,7 @@ module ym2602
 	
 	ymn_dlatch l28(.MCLK(MCLK), .en(w30), .inp(vram_address[0]), .val(w28));
 	
-	ymn_sr_bit l29(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(~w343[0]), .val(w29));
+	ymn_sr_bit l29(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(~w343[0]), .val(w29));
 	
 	assign w30 = w29 & hclk1;
 	
@@ -953,7 +953,7 @@ module ym2602
 	ymn_dlatch l82(.MCLK(MCLK), .en(hclk2), .inp(w84), .val(w82));
 	assign w83 = w82 & hclk1;
 	
-	ymn_dlatch l84(.MCLK(MCLK), .en(hclk1), .inp(~(~reg_80_b2) | w163), .val(w84));
+	ymn_dlatch l84(.MCLK(MCLK), .en(hclk1), .inp(~(~reg_80_b2 | w163)), .val(w84));
 	
 	ymn_sr_bit l85(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w343[11]), .val(w85));
 	
@@ -1182,7 +1182,7 @@ module ym2602
 	
 	ymn_sr_bit l205(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w204), .val(w205));
 	
-	ymn_rs_trig rs206(.MCLK(MCLK), .rst(reset1 | w205), .set(w180), .q(w206), .nq(w206n));
+	ymn_rs_trig rs206(.MCLK(MCLK), .set(reset1 | w205), .rst(w180), .q(w206), .nq(w206n));
 	
 	assign w207 = w206 & w204;
 	
