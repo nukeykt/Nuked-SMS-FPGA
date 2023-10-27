@@ -48,7 +48,7 @@ module sega315_5216
 
 	wire iorq = KILLGA | IORQ;
 	wire sel0 = iorq | ~(ADDRESS[6] & ADDRESS[7]);
-	wire sel1 = iorq | ~(~ADDRESS[6] & ADDRESS[7]);
+	wire sel1 = iorq | ~(~ADDRESS[6] & ~ADDRESS[7]);
 	wire port_read = ~(sel0 | RD);
 	wire write0 = ~(sel1 | WR | ADDRESS[0]);
 	wire write1 = ~(sel1 | WR | ~ADDRESS[0]);
