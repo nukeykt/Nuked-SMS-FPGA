@@ -965,7 +965,7 @@ module ym2602
 	
 	ymn_sr_bit l89(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w343[1]), .val(w89));
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(2)) l90(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w74 ? 2'h0 : w90 + {1'h0, w89}), .val(w90));
+	ymn_sr_bit_array #(.DATA_WIDTH(2)) l90(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w74 ? 2'h0 : (w90 + {1'h0, w89})), .val(w90));
 	
 	assign w91 = ~(w90[1] | ~w90[0] | ~w89);
 	assign w92 = ~(~w90[1] | ~w90[0] | ~w89);
@@ -1010,8 +1010,8 @@ module ym2602
 	ymn_sr_bit_array #(.DATA_WIDTH(4)) l114(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w113 : w114), .val(w114));
 	ymn_sr_bit_array #(.DATA_WIDTH(4)) l115(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w114 : w115), .val(w115));
 	ymn_sr_bit_array #(.DATA_WIDTH(4)) l116(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w115 : w116), .val(w116));
-	ymn_dlatch #(.DATA_WIDTH(4)) l117_1(.MCLK(MCLK), .en(hclk1), .inp(w108 ? w116 : w117), .val(w117_1));
-	ymn_dlatch #(.DATA_WIDTH(4)) l117(.MCLK(MCLK), .en(hclk2), .inp(w117_1), .val(w117));
+	ymn_dlatch #(.DATA_WIDTH(4)) l117_1(.MCLK(MCLK), .en(hclk2), .inp(w108 ? w116 : w117), .val(w117_1));
+	ymn_dlatch #(.DATA_WIDTH(4)) l117(.MCLK(MCLK), .en(hclk1), .inp(w117_1), .val(w117));
 	
 	ymn_dlatch l118(.MCLK(MCLK), .en(hclk1), .inp(~w518), .val(w118));
 	ymn_dlatch #(.DATA_WIDTH(8)) l119_1(.MCLK(MCLK), .en(hclk2), .inp( w108 ? { w119[6:0], w118 } : w119 ), .val(w119_1));
@@ -1040,8 +1040,8 @@ module ym2602
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l132(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w131 : w132), .val(w132));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l133(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w132 : w133), .val(w133));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l134(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w133 : w134), .val(w134));
-	ymn_dlatch #(.DATA_WIDTH(6)) l135_1(.MCLK(MCLK), .en(hclk1), .inp(w108 ? w134 : w135), .val(w135_1));
-	ymn_dlatch #(.DATA_WIDTH(6)) l135(.MCLK(MCLK), .en(hclk2), .inp(w135_1), .val(w135));
+	ymn_dlatch #(.DATA_WIDTH(6)) l135_1(.MCLK(MCLK), .en(hclk2), .inp(w108 ? w134 : w135), .val(w135_1));
+	ymn_dlatch #(.DATA_WIDTH(6)) l135(.MCLK(MCLK), .en(hclk1), .inp(w135_1), .val(w135));
 	
 	ymn_dlatch l136(.MCLK(MCLK), .en(hclk2), .inp(w544), .val(w136));
 	assign w137 = w136 & hclk1;
@@ -1317,6 +1317,8 @@ module ym2602
 	assign w239 = ~w343[7];
 	
 	assign w240 = ~reg_80_b1;
+	
+	assign w241 = ~(w239 | reg_80_b2 | w240);
 	
 	ymn_sr_bit l242(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w241), .val(w242));
 	
@@ -1967,7 +1969,7 @@ module ym2602
 	
 	assign w489 = w488 == 8'd208 & ~w505;
 	
-	assign w490 = { 1'h0, w145[4:0] } + { 1'h0, ~w488[4:0] } + 5'h1;
+	assign w490 = { 1'h0, w145[4:0] } + { 1'h0, ~w488[4:0] } + 6'h1;
 	
 	ymn_dlatch l491(.MCLK(MCLK), .en(hclk1), .inp(w490[5]), .val(w491));
 	
@@ -2061,7 +2063,7 @@ module ym2602
 	
 	assign w536 = ~(reg_80_b2 & (w343[3] | w343[8]));
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(2)) l537(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w548 ? 2'h0 : w537 + { 1'h0, ~w536 }), .val(w537));
+	ymn_sr_bit_array #(.DATA_WIDTH(2)) l537(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w548 ? 2'h0 : (w537 + { 1'h0, ~w536 })), .val(w537));
 	
 	ymn_dlatch l538(.MCLK(MCLK), .en(hclk1), .inp(w545[1] | w545[2]), .val(w538));
 	
@@ -2089,7 +2091,7 @@ module ym2602
 	
 	assign w548 = ~(~w547 & ~w545[0]);
 	
-	ymn_sr_bit_array #(.DATA_WIDTH(3)) l549(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w547 ? 3'h0 : w549 + { 2'h0, w545[0] }), .val(w549));
+	ymn_sr_bit_array #(.DATA_WIDTH(3)) l549(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w547 ? 3'h0 : (w549 + { 2'h0, w545[0] })), .val(w549));
 	
 	assign w550[0] = w549 == 3'h0 & w545[4];
 	assign w550[1] = w549 == 3'h1 & w545[4];
@@ -2229,17 +2231,17 @@ module ym2602
 	assign DAC_r = ((dac_sel[1:0] == 2'h0) ? 8'd0 : 8'd0) |
 						((dac_sel[1:0] == 2'h1) ? 8'd85 : 8'd0) |
 						((dac_sel[1:0] == 2'h2) ? 8'd170 : 8'd0) |
-						((dac_sel[1:0] == 2'h3) ? 8'd170 : 8'd0);
+						((dac_sel[1:0] == 2'h3) ? 8'd255 : 8'd0);
 	
 	assign DAC_g = ((dac_sel[3:2] == 2'h0) ? 8'd0 : 8'd0) |
 						((dac_sel[3:2] == 2'h1) ? 8'd85 : 8'd0) |
 						((dac_sel[3:2] == 2'h2) ? 8'd170 : 8'd0) |
-						((dac_sel[3:2] == 2'h3) ? 8'd170 : 8'd0);
+						((dac_sel[3:2] == 2'h3) ? 8'd255 : 8'd0);
 	
 	assign DAC_b = ((dac_sel[5:4] == 2'h0) ? 8'd0 : 8'd0) |
 						((dac_sel[5:4] == 2'h1) ? 8'd103 : 8'd0) |
 						((dac_sel[5:4] == 2'h2) ? 8'd170 : 8'd0) |
-						((dac_sel[5:4] == 2'h3) ? 8'd170 : 8'd0);
+						((dac_sel[5:4] == 2'h3) ? 8'd255 : 8'd0);
 	
 	ympsg psg(.MCLK(MCLK), .clk(zclk), .reset(RESET), .write(~(cpu_wr | cpu_iorq | cpu_a7 | ~cpu_a6)), .data(io_data),
 		.psg(PSG));
@@ -2367,7 +2369,7 @@ module ym2602
 									(w107 ? { 9'h1ff, w117_1[2:0], 2'h3 } : 14'h3fff) &
 									(w125 ? { 8'hff, w117_1[3], 5'h1f } : 14'h3fff) &
 									(w140 ? { 7'h7f, w131_1[5:1], 2'h3 } : 14'h3fff) &
-									(w137 ? { 7'h7e, w131_1[5:0], 1'h1 } : 14'h3fff) &
+									(w137 ? { 7'h7e, w135_1[5:0], 1'h1 } : 14'h3fff) &
 									(w237 ? { 4'hf, w145[7:3], w313[7:3] } : 14'h3fff) &
 									(w243 ? { 1'h1, w145[7:6], 11'h7ff } : 14'h3fff) &
 									(w234 ? { 1'h1, w145[7:6], 8'hff, w145[2:0] } : 14'h3fff) &
