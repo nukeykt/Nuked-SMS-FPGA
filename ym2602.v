@@ -1648,7 +1648,7 @@ module ym2602
 	ymn_dlatch #(.DATA_WIDTH(22)) l340(.MCLK(MCLK), .en(hclk1), .inp(hpla[21:0]), .val(w340));
 	
 	assign w341[0] = w340[1] | w340[2];
-	assign w341[1] = w340[2];
+	assign w341[1] = w340[0];
 	assign w341[2] = w340[3];
 	assign w341[3] = w340[4];
 	assign w341[4] = w340[5];
@@ -2073,7 +2073,7 @@ module ym2602
 	
 	assign w541 = ~(w545[3] | (w343[4] & ~w343[3]));
 	
-	ymn_dlatch l542(.MCLK(MCLK), .en(hclk1), .inp(w541), .val(w542));
+	ymn_dlatch l542(.MCLK(MCLK), .en(hclk1), .inp(~w541), .val(w542));
 	
 	assign w543 = ~w545[3];
 	
@@ -2361,15 +2361,15 @@ module ym2602
 	
 	wire [13:0] va_value =  (w42 ? { 1'h1, w3[7:1], 6'h3f } : 14'h3fff) &
 									(w40 ? { 8'hff, w3[0], 5'h1f } : 14'h3fff) &
-									(w83 ? { 6'h3f, w67[1:0], w63[4:1], 1'h1 } : 14'h3fff) &
-									(w97 ? { 7'h7f, w63[4:2], 2'h3 } : 14'h3fff) &
+									(w83 ? { 6'h3f, w67[1:0], w63[4:0], 1'h1 } : 14'h3fff) &
+									(w97 ? { 7'h7f, w63[4:0], 2'h3 } : 14'h3fff) &
 									(w88 ? { 4'hf, w63[7:5], 7'h7f } : 14'h3fff) &
 									(w105 ? { 12'hfff, w90[1:0] } : 14'h3fff) &
 									(w103 ? { 14'h3ffc } : 14'h3fff) &
 									(w107 ? { 9'h1ff, w117_1[2:0], 2'h3 } : 14'h3fff) &
 									(w125 ? { 8'hff, w117_1[3], 5'h1f } : 14'h3fff) &
 									(w140 ? { 7'h7f, w131_1[5:1], 2'h3 } : 14'h3fff) &
-									(w137 ? { 7'h7e, w135_1[5:0], 1'h1 } : 14'h3fff) &
+									(w137 ? { 7'h7f, w135_1[5:0], 1'h1 } : 14'h3fff) &
 									(w237 ? { 4'hf, w145[7:3], w313[7:3] } : 14'h3fff) &
 									(w243 ? { 1'h1, w145[7:6], 11'h7ff } : 14'h3fff) &
 									(w234 ? { 1'h1, w145[7:6], 8'hff, w145[2:0] } : 14'h3fff) &
