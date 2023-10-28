@@ -1721,7 +1721,7 @@ module ym2602
 	
 	ymn_sr_bit l366(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w365), .val(w366));
 	
-	ymn_sr_bit l367(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w366), .val(w367));
+	ymn_sr_bit l367(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(w372), .val(w367));
 	
 	ymn_sr_bit l368(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(hpla[42]), .val(w368));
 	ymn_sr_bit l369(.MCLK(MCLK), .c1(hclk1), .c2(hclk2), .inp(hpla[43]), .val(w369));
@@ -2572,14 +2572,14 @@ module sprite_unit1
 	
 	assign w595 = ~w593_0[8];
 	
-	assign w596 = w583 ? { 1'h0, vram_data[7:0] } : (w582 ? { w597[7:0] , 1'h0 } : w597);
+	assign w596 = w583 ? { 1'h0, vram_data[15:8] } : (w582 ? { w597[7:0] , 1'h0 } : w597);
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l597_0(.MCLK(MCLK), .en(hclk2), .inp(w596), .val(w597_0));
 	ymn_dlatch #(.DATA_WIDTH(9)) l597(.MCLK(MCLK), .en(hclk1), .inp(w597_0), .val(w597));
 	
 	assign w600 = ~w597_0[8];
 	
-	assign w598 = w581 ? { 1'h0, vram_data[7:0] } : (w582 ? { w598[7:0] , 1'h0 } : w599);
+	assign w598 = w581 ? { 1'h0, vram_data[15:8] } : (w582 ? { w598[7:0] , 1'h0 } : w599);
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l599_0(.MCLK(MCLK), .en(hclk2), .inp(w598), .val(w599_0));
 	ymn_dlatch #(.DATA_WIDTH(9)) l599(.MCLK(MCLK), .en(hclk1), .inp(w599_0), .val(w599));
@@ -2692,14 +2692,14 @@ module sprite_unit2
 	
 	assign w628 = ~w627_0[8];
 	
-	assign w629 = w616 ? { 1'h0, vram_data[7:0] } : (~w618 ? { w630[7:0] , 1'h0 } : w630);
+	assign w629 = w616 ? { 1'h0, vram_data[15:8] } : (~w618 ? { w630[7:0] , 1'h0 } : w630);
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l630_0(.MCLK(MCLK), .en(hclk2), .inp(w629), .val(w630_0));
 	ymn_dlatch #(.DATA_WIDTH(9)) l630(.MCLK(MCLK), .en(hclk1), .inp(w630_0), .val(w630));
 	
 	assign w631 = ~w630_0[8];
 	
-	assign w632 = w617 ? { 1'h0, vram_data[7:0] } : (~w618 ? { w633[7:0] , 1'h0 } : w633);
+	assign w632 = w617 ? { 1'h0, vram_data[15:8] } : (~w618 ? { w633[7:0] , 1'h0 } : w633);
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l633_0(.MCLK(MCLK), .en(hclk2), .inp(w632), .val(w633_0));
 	ymn_dlatch #(.DATA_WIDTH(9)) l633(.MCLK(MCLK), .en(hclk1), .inp(w633_0), .val(w633));
