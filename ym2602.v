@@ -1035,8 +1035,8 @@ module ym2602
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l128(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? { w126, w127 } : w128), .val(w128));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l129(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w128 : w129), .val(w129));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l130(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w129 : w130), .val(w130));
-	ymn_dlatch #(.DATA_WIDTH(6)) l131_1(.MCLK(MCLK), .en(hclk1), .inp(w108 ? w130 : w131), .val(w131_1));
-	ymn_dlatch #(.DATA_WIDTH(6)) l131(.MCLK(MCLK), .en(hclk2), .inp(w131_1), .val(w131));
+	ymn_dlatch #(.DATA_WIDTH(6)) l131_1(.MCLK(MCLK), .en(hclk2), .inp(w108 ? w130 : w131), .val(w131_1));
+	ymn_dlatch #(.DATA_WIDTH(6)) l131(.MCLK(MCLK), .en(hclk1), .inp(w131_1), .val(w131));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l132(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w131 : w132), .val(w132));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l133(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w132 : w133), .val(w133));
 	ymn_sr_bit_array #(.DATA_WIDTH(6)) l134(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w108 ? w133 : w134), .val(w134));
@@ -2388,7 +2388,7 @@ module ym2602
 									(w452 ? { 3'h7, w449[7:2], 5'h1f } : 14'h3fff) &
 									(w455 ? { 9'h1ff, w449[1:0], 3'h7 } : 14'h3fff) &
 									(w525 ? { 11'h7ff, w522_0[2:0] } : 14'h3fff) &
-									(w528 ? { 9'h1ff, ~w313[1], w522_0[3] } : 14'h3fff) &
+									(w528 ? { 9'h1ff, ~w313[1], w522_0[3], 3'h7 } : 14'h3fff) &
 									(w540 ? { 12'hfff, ~w537[1], 1'h1 } : 14'h3fff);
 	
 	reg [13:0] vram_address_mem;
