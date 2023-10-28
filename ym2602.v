@@ -20,7 +20,7 @@
  *      org, andkorzh, HardWareMan (emu-russia):
  *          help & support.
  */
- 
+
 module ym2602
 	(
 	input MCLK,
@@ -2602,7 +2602,7 @@ module sprite_unit1
 	
 	assign w600 = ~w597_0[8];
 	
-	assign w598 = w581 ? { 1'h0, vram_data[15:8] } : (w582 ? { w598[7:0] , 1'h0 } : w599);
+	assign w598 = w581 ? { 1'h0, vram_data[15:8] } : (w582 ? { w599[7:0] , 1'h0 } : w599);
 	
 	ymn_dlatch #(.DATA_WIDTH(9)) l599_0(.MCLK(MCLK), .en(hclk2), .inp(w598), .val(w599_0));
 	ymn_dlatch #(.DATA_WIDTH(9)) l599(.MCLK(MCLK), .en(hclk1), .inp(w599_0), .val(w599));
