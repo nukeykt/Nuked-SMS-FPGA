@@ -98,28 +98,28 @@ module sega315_5216
 	fujitsu_dffs l_reg_3f_6(.MCLK(MCLK), .set(reset), .inp(data[6]), .clk(write1), .val(reg_3f_6));
 	fujitsu_dffs l_reg_3f_7(.MCLK(MCLK), .set(reset), .inp(data[7]), .clk(write1), .val(reg_3f_7));
 	
-	assign PORT_A_d = { reg_3f_1, 1'h1, reg_3f_0, 4'hf };
-	assign PORT_B_d = { reg_3f_3, 1'h1, reg_3f_2, 4'hf };
+	assign PORT_A_d = { reg_3f_1, reg_3f_0, 1'h1, 4'hf };
+	assign PORT_B_d = { reg_3f_3, reg_3f_2, 1'h1, 4'hf };
 	
 	assign PORT_A_o = {
 		reg_3f_1 ? PORT_A_i[6] : reg_3f_5,
+		reg_3f_0 ? PORT_A_i[5] : reg_3f_4,
 		1'h0,
-		reg_3f_0 ? PORT_A_i[4] : reg_3f_4,
 		4'h0 };
 	
 	assign PORT_B_o = {
 		reg_3f_3 ? PORT_B_i[6] : reg_3f_7,
+		reg_3f_2 ? PORT_B_i[5] : reg_3f_6,
 		1'h0,
-		reg_3f_2 ? PORT_B_i[4] : reg_3f_6,
 		4'h0 };
 	
 	assign DATA_o = {
 		ADDRESS[0] ? PORT_B_o[6] : PORT_B_i[1],
 		ADDRESS[0] ? PORT_A_o[6] : PORT_B_i[0],
-		ADDRESS[0] ? CONT1 : PORT_A_o[4],
-		ADDRESS[0] ? CONT2 : PORT_A_i[5],
-		ADDRESS[0] ? PORT_B_o[4] : PORT_A_i[3],
-		ADDRESS[0] ? PORT_B_i[5] : PORT_A_i[2],
+		ADDRESS[0] ? CONT1 : PORT_A_o[5],
+		ADDRESS[0] ? CONT2 : PORT_A_i[4],
+		ADDRESS[0] ? PORT_B_o[5] : PORT_A_i[3],
+		ADDRESS[0] ? PORT_B_i[4] : PORT_A_i[2],
 		ADDRESS[0] ? PORT_B_i[3] : PORT_A_i[1],
 		ADDRESS[0] ? PORT_B_i[2] : PORT_A_i[0]
 		};
