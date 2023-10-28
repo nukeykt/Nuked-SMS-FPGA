@@ -245,8 +245,15 @@ module sms_board
 	
 	wire [15:0] vram_q;
 	
+	reg [1:0] audio_ctrl;
+	
 	always @(posedge MCLK)
 	begin
+		if (ext_reset)
+			audio_ctrl <= 2'h0;
+		else if (~IORQ & ~WR & ADDRESS[7:0] == 8'hf2)
+			audio_ctrl <= DATA[1:0];
+		
 		if (~z80_DATA_d)
 			DATA <= z80_DATA_o;
 		else if (~vdp_DATA_d)
@@ -259,6 +266,8 @@ module sms_board
 			DATA <= bios_data;
 		else if (ram_oe)
 			DATA <= ram_o;
+		else if (~IORQ & ~RD & ADDRESS[7:0] == 8'hf2)
+			DATA <= { 7'h0, audio_ctrl[0] };
 		
 		if (~z80_ADDRESS_d)
 			ADDRESS <= z80_ADDRESS_o;
