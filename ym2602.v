@@ -789,7 +789,7 @@ module ym2602
 	
 	assign w733 = ~w728;
 	ymn_sr_bit l734(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w733), .val(w734));
-	ymn_sr_bit l735(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(w734), .val(w735));
+	ymn_sr_bit l735(.MCLK(MCLK), .c1(hclk2), .c2(hclk1), .inp(~w734), .val(w735));
 	
 	assign w736 = w735 & hclk2;
 	
