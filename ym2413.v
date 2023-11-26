@@ -845,7 +845,7 @@ module ym2413
 	assign multi_ctrl[2] = multi_sel[1] | multi_sel[5] | multi_sel[9]; // 1, 5, 9
 	assign multi_ctrl[3] = multi_sel[2] | multi_sel[6] | multi_sel[10]; // 2, 6, 10, 11
 	assign multi_ctrl[4] = multi_sel[3] | multi_sel[7] | multi_sel[12]; // 3, 7, 14, 15
-	assign multi_ctrl[5] = multi_sel[9]; // 0
+	assign multi_ctrl[5] = multi_sel[0]; // 0
 	
 	assign multi_ctrl[6] = multi_sel[0] | multi_sel[1] | multi_sel[2]; // 0, 1, 2
 	assign multi_ctrl[7] = multi_sel[12]; // 14, 15
