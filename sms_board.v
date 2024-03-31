@@ -56,6 +56,7 @@ module sms_board
 	// audio
 	output [17:0] aud_l, aud_r,
 	output [9:0] opll_mo, opll_ro,
+	output opll_dac_clk,
 	output [15:0] vdp_psg,
 	
 	// input
@@ -67,7 +68,11 @@ module sms_board
 	output [6:0] port_b_d,
 	
 	// extra
-	output vdp_hclk1
+	output vdp_hclk1,
+	output vid_vsync,
+	output vid_hsync,
+	output vid_vblank,
+	output vid_hblank
 	);
 	
 	reg [2:0] clk_div = 3'h0;
@@ -165,7 +170,11 @@ module sms_board
 		.CE(vdp_CE),
 		.INT(INT),
 		.PSG(vdp_psg),
-		.vdp_hclk1(vdp_hclk1)
+		.vdp_hclk1(vdp_hclk1),
+		.HSYNC(vid_hsync),
+		.VSYNC(vid_vsync),
+		.HBLANK(vid_hblank),
+		.VBLANK(vid_vblank)
 		);
 	
 	assign vid_csync = CSYNC;
@@ -180,7 +189,8 @@ module sms_board
 		.IC(~ext_reset),
 		.A0(ADDRESS[0]),
 		.RO(opll_ro),
-		.MO(opll_mo)
+		.MO(opll_mo),
+		.dac_clk_o(opll_dac_clk)
 		);
 	
 	sega315_5216 iochip
